@@ -1,3 +1,10 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { ProductCard } from "../components/ProductCard";
+import { products } from "../data/products";
+import type { ProductCategory } from "../types/product";
+
 const featuredCategories = [
   {
     title: "Electronics",
@@ -31,83 +38,6 @@ const featuredCategories = [
   },
 ];
 
-const flashDeals = [
-  {
-    name: "MacBook Pro M4",
-    category: "Electronics",
-    price: "$2,499",
-    discount: "18% off",
-  },
-  {
-    name: "North Face Summit Shell",
-    category: "Fashion",
-    price: "$289",
-    discount: "25% off",
-  },
-  {
-    name: "Lace Front Wig Signature",
-    category: "Beauty",
-    price: "$349",
-    discount: "12% off",
-  },
-  {
-    name: "Focusrite Scarlett 4i4",
-    category: "Studio",
-    price: "$229",
-    discount: "20% off",
-  },
-];
-
-const bestSellers = [
-  {
-    name: "Galaxy S25 Ultra",
-    tag: "Premium Tech",
-    price: "$1,299",
-    badge: "Top Rated",
-  },
-  {
-    name: "Authentic Kobe Jersey",
-    tag: "Collector Drop",
-    price: "$480",
-    badge: "Limited",
-  },
-  {
-    name: "Black Seed Oil Bundle",
-    tag: "Wellness",
-    price: "$79",
-    badge: "Best Value",
-  },
-  {
-    name: "California King Bed Frame",
-    tag: "Luxury Home",
-    price: "$899",
-    badge: "Editor Pick",
-  },
-];
-
-const newArrivals = [
-  {
-    name: "AirPods Max Luxe",
-    tag: "Audio",
-    price: "$549",
-  },
-  {
-    name: "Sweetwater Studio Kit",
-    tag: "Creator Gear",
-    price: "$1,199",
-  },
-  {
-    name: "Ashwagandha Complex",
-    tag: "Fitness",
-    price: "$64",
-  },
-  {
-    name: "Helly Hansen Shell Jacket",
-    tag: "Outdoor",
-    price: "$215",
-  },
-];
-
 const brands = [
   "Apple",
   "Samsung",
@@ -121,41 +51,25 @@ const brands = [
 
 const departmentLinks = [
   "Electronics",
-  "Apple",
-  "Samsung",
-  "Unlocked Phones",
-  "MacBooks",
-  "iPads",
-  "AirPods",
   "Fashion",
-  "Pelle Pelle",
-  "North Face",
-  "Helly Hansen",
-  "Authentic Jerseys",
-  "GOAT",
-  "StockX",
   "Beauty",
-  "Human Hair Wigs",
-  "Lace Front Wigs",
   "Fitness",
-  "Gym Equipment",
-  "Black Seed Oil",
-  "Ashwagandha",
   "Home",
-  "Luxury Furniture",
-  "California King Beds",
   "Studio",
-  "Sweetwater",
-  "Waves",
-  "Antares",
-  "Focusrite",
-  "Universal Audio",
-  "Microphones",
-  "Studio Monitors",
   "Pet Supplies",
-  "Gaming",
-  "Home Improvement",
-  "Adult Wellness",
+  "Health",
+];
+
+const allCategories: Array<"All" | ProductCategory> = [
+  "All",
+  "Electronics",
+  "Fashion",
+  "Beauty",
+  "Fitness",
+  "Home",
+  "Studio",
+  "Pet Supplies",
+  "Health",
 ];
 
 const testimonials = [
@@ -195,42 +109,19 @@ function CartIcon() {
   );
 }
 
-function ProductCard({
-  name,
-  tag,
-  price,
-  badge,
-}: {
-  name: string;
-  tag: string;
-  price: string;
-  badge?: string;
-}) {
-  return (
-    <article className="group rounded-[28px] border border-white/10 bg-white/[0.03] p-4 shadow-[0_12px_40px_rgba(0,0,0,0.45)] transition duration-300 hover:-translate-y-1 hover:border-amber-300/40 hover:bg-white/[0.06]">
-      <div className="mb-4 rounded-[22px] bg-[radial-gradient(circle_at_top,_rgba(244,198,97,0.45),_rgba(255,255,255,0.03)_42%,_rgba(0,0,0,0.15)_75%)] p-8 text-center text-5xl text-amber-100/70">
-        {name.slice(0, 2).toUpperCase()}
-      </div>
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-amber-200/75">{tag}</p>
-          <h3 className="mt-2 text-lg font-semibold text-white">{name}</h3>
-        </div>
-        <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.24em] text-amber-100">
-          {badge ?? "New"}
-        </span>
-      </div>
-      <div className="mt-6 flex items-center justify-between">
-        <span className="text-xl font-semibold text-amber-300">{price}</span>
-        <button className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-white transition hover:border-amber-300/50 hover:bg-amber-300/10">
-          Add to bag
-        </button>
-      </div>
-    </article>
-  );
-}
-
 export default function Home() {
+  const [selectedCategory, setSelectedCategory] = useState<"All" | ProductCategory>("All");
+
+  const filteredProducts = useMemo(() => {
+    return selectedCategory === "All"
+      ? products
+      : products.filter((product) => product.category === selectedCategory);
+  }, [selectedCategory]);
+
+  const featuredProducts = filteredProducts.filter((product) => product.featured).slice(0, 8);
+  const bestSellers = filteredProducts.slice(0, 4);
+  const newArrivals = filteredProducts.slice(8, 12);
+
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#090909_0%,#111111_35%,#0b0b0b_100%)] text-white">
       <header className="sticky top-0 z-50 border-b border-white/8 bg-black/70 backdrop-blur-xl">
@@ -247,7 +138,7 @@ export default function Home() {
 
           <nav className="hidden items-center gap-6 text-sm text-zinc-300 lg:flex">
             <a className="transition hover:text-amber-200" href="#featured">Featured</a>
-            <a className="transition hover:text-amber-200" href="#deals">Flash Deals</a>
+            <a className="transition hover:text-amber-200" href="#catalog">Catalog</a>
             <a className="transition hover:text-amber-200" href="#best">Best Sellers</a>
             <a className="transition hover:text-amber-200" href="#brands">Brands</a>
             <a className="transition hover:text-amber-200" href="#reviews">Reviews</a>
@@ -281,15 +172,21 @@ export default function Home() {
               Curated indulgence for the modern collector.
             </h2>
             <p className="mt-4 max-w-lg text-base text-zinc-300 sm:text-lg">
-              Discover limited-edition fashion, elite audio, wellness essentials, and premium home finds.
+              Discover luxury affiliate picks across electronics, fashion, beauty, home, fitness, and studio equipment.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <button className="rounded-full bg-amber-300 px-5 py-3 text-sm font-bold uppercase tracking-[0.25em] text-black transition hover:scale-[1.02]">
+              <a
+                href="#catalog"
+                className="rounded-full bg-amber-300 px-5 py-3 text-sm font-bold uppercase tracking-[0.25em] text-black transition hover:scale-[1.02]"
+              >
                 Shop featured
-              </button>
-              <button className="rounded-full border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-bold uppercase tracking-[0.25em] text-white transition hover:border-amber-300/50">
-                Explore categories
-              </button>
+              </a>
+              <a
+                href="#brands"
+                className="rounded-full border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-bold uppercase tracking-[0.25em] text-white transition hover:border-amber-300/50"
+              >
+                Explore brands
+              </a>
             </div>
           </div>
         </div>
@@ -298,12 +195,12 @@ export default function Home() {
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
             <p className="text-[10px] uppercase tracking-[0.35em] text-amber-200/80">Signature Arrival</p>
             <h3 className="mt-3 text-2xl font-semibold text-white">Studio Essentials</h3>
-            <p className="mt-2 text-sm text-zinc-300">Focusrite, Universal Audio, Sweetwater, and premium mic kits.</p>
+            <p className="mt-2 text-sm text-zinc-300">Focusrite, Universal Audio, and premium mic suites from trusted merchants.</p>
           </div>
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
             <p className="text-[10px] uppercase tracking-[0.35em] text-amber-200/80">New Collector</p>
             <h3 className="mt-3 text-2xl font-semibold text-white">High-Value Finds</h3>
-            <p className="mt-2 text-sm text-zinc-300">Black seed oil, ashwagandha, luxury furniture, and wellness bundles.</p>
+            <p className="mt-2 text-sm text-zinc-300">Luxury furniture, wellness bundles, and curated accessories with merchant-grade curation.</p>
           </div>
         </div>
       </section>
@@ -333,6 +230,38 @@ export default function Home() {
         </div>
       </section>
 
+      <section id="catalog" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-6 flex items-end justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.4em] text-amber-200/80">Affiliate Marketplace</p>
+            <h2 className="mt-2 text-3xl font-semibold text-white">Featured product catalog</h2>
+          </div>
+        </div>
+
+        <div className="mb-5 flex flex-wrap gap-2.5">
+          {allCategories.map((category) => (
+            <button
+              key={category}
+              type="button"
+              onClick={() => setSelectedCategory(category)}
+              className={`rounded-full border px-3 py-2 text-[10px] font-bold uppercase tracking-[0.28em] transition ${
+                selectedCategory === category
+                  ? "border-amber-300/55 bg-amber-300 text-black"
+                  : "border-white/10 bg-white/[0.04] text-zinc-200 hover:border-amber-300/40 hover:text-amber-100"
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {featuredProducts.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      </section>
+
       <section className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
         <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5">
           <div className="mb-4">
@@ -352,40 +281,6 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="deals" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-end justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-amber-200/80">Flash Deals</p>
-            <h2 className="mt-2 text-3xl font-semibold text-white">Act before it fades</h2>
-          </div>
-          <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-amber-100">
-            Limited time
-          </span>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {flashDeals.map((deal) => (
-            <article key={deal.name} className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5 transition duration-300 hover:-translate-y-1 hover:border-amber-300/50">
-              <div className="mb-4 rounded-[22px] bg-[linear-gradient(135deg,rgba(244,198,97,0.28),rgba(255,255,255,0.02))] p-8 text-center text-4xl text-amber-100/80">
-                {deal.name.slice(0, 2).toUpperCase()}
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] uppercase tracking-[0.26em] text-amber-200/80">{deal.category}</span>
-                <span className="rounded-full bg-amber-300/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.28em] text-amber-100">
-                  {deal.discount}
-                </span>
-              </div>
-              <h3 className="mt-3 text-lg font-semibold text-white">{deal.name}</h3>
-              <div className="mt-5 flex items-center justify-between">
-                <span className="text-xl font-semibold text-amber-300">{deal.price}</span>
-                <button className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.24em] text-white">
-                  Buy now
-                </button>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
       <section id="best" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6 flex items-end justify-between gap-3">
           <div>
@@ -395,7 +290,7 @@ export default function Home() {
         </div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {bestSellers.map((product) => (
-            <ProductCard key={product.name} {...product} />
+            <ProductCard key={product.id} product={product} />
           ))}
         </div>
       </section>
@@ -409,7 +304,7 @@ export default function Home() {
         </div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {newArrivals.map((product) => (
-            <ProductCard key={product.name} {...product} badge="New" />
+            <ProductCard key={product.id} product={product} />
           ))}
         </div>
       </section>
@@ -491,9 +386,9 @@ export default function Home() {
             <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-white">Collections</h3>
             <ul className="mt-3 space-y-2">
               <li>Studio</li>
-              <li>Gaming</li>
-              <li>Home</li>
               <li>Pet Supplies</li>
+              <li>Home</li>
+              <li>Health</li>
             </ul>
           </div>
           <div>
