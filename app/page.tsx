@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ProductCard } from "../components/ProductCard";
+import { UserMenu } from "../components/account/UserMenu";
 import { products } from "../data/products";
 import type { ProductCategory } from "../types/product";
 
@@ -152,9 +153,7 @@ export default function Home() {
                 placeholder="Search luxury picks"
               />
             </div>
-            <button className="rounded-full border border-amber-300/40 bg-amber-300/10 px-4 py-2 text-sm font-semibold text-amber-100 transition hover:bg-amber-300/20">
-              Login
-            </button>
+            <UserMenu />
             <button className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-amber-100 transition hover:border-amber-300/50 hover:bg-amber-300/10">
               <CartIcon />
             </button>
