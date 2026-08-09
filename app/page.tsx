@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { ProductCard } from "../components/ProductCard";
 import { MarketplaceProductCard } from "../components/MarketplaceProductCard";
 import { UserMenu } from "../components/account/UserMenu";
+import { getCartCountSync, subscribeToCartUpdates } from "../lib/cart";
 import { getMarketplaceProducts } from "../lib/marketplace";
 import { products } from "../data/products";
 import type { ProductCategory } from "../types/product";
@@ -116,6 +118,7 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<"All" | ProductCategory>("All");
   const [marketplaceSearch, setMarketplaceSearch] = useState("");
   const [liveMarketplaceProducts, setLiveMarketplaceProducts] = useState<any[]>([]);
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     void (async () => {
@@ -126,6 +129,13 @@ export default function Home() {
       setLiveMarketplaceProducts(products);
     })();
   }, [selectedCategory, marketplaceSearch]);
+
+  useEffect(() => {
+    setCartCount(getCartCountSync());
+    return subscribeToCartUpdates(() => {
+      setCartCount(getCartCountSync());
+    });
+  }, []);
 
   const filteredProducts = useMemo(() => {
     return selectedCategory === "All"
@@ -166,12 +176,19 @@ export default function Home() {
               <input
                 className="w-40 bg-transparent text-sm text-white outline-none placeholder:text-zinc-500"
                 placeholder="Search luxury picks"
+                value={marketplaceSearch}
+                onChange={(event) => setMarketplaceSearch(event.target.value)}
               />
             </div>
             <UserMenu />
-            <button className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-amber-100 transition hover:border-amber-300/50 hover:bg-amber-300/10">
+            <Link href="/cart" className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-amber-100 transition hover:border-amber-300/50 hover:bg-amber-300/10">
               <CartIcon />
-            </button>
+              {cartCount > 0 ? (
+                <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-amber-300 px-1.5 py-0.5 text-center text-[10px] font-bold text-black">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              ) : null}
+            </Link>
           </div>
         </div>
       </header>
@@ -272,6 +289,23 @@ export default function Home() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {featuredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mb-6 flex items-end justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.4em] text-amber-200/80">Seller Marketplace</p>
+            <h2 className="mt-2 text-3xl font-semibold text-white">Live seller spotlight</h2>
+          </div>
+          <Link href="/cart" className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-zinc-200 hover:border-amber-300/40 hover:text-amber-100">
+            Go to cart
+          </Link>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {marketplaceFeatured.map((product) => (
+            <MarketplaceProductCard key={product.id} product={product} />
           ))}
         </div>
       </section>

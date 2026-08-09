@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AuthCard } from "../../components/auth/AuthCard";
 import { handleSupabaseAuth } from "../../lib/auth-helpers";
+import { mergeGuestCartIntoAuthenticatedCart } from "@/lib/cart";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -13,8 +14,10 @@ export default function LoginPage() {
     event.preventDefault();
     try {
       await handleSupabaseAuth("login", email, password);
-      setMessage("Sign in successful. Redirecting to your account dashboard.");
-      window.location.href = "/account";
+      await mergeGuestCartIntoAuthenticatedCart();
+      const redirect = new URLSearchParams(window.location.search).get("redirect") || "/account";
+      setMessage("Sign in successful. Redirecting now.");
+      window.location.href = redirect;
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to sign in.");
     }

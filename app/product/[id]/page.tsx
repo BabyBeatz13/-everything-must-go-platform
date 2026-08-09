@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getMarketplaceProductById, getMarketplaceProducts } from "@/lib/marketplace";
+import { MarketplaceProductActions } from "@/components/MarketplaceProductActions";
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -51,17 +52,10 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               <div className="rounded-2xl border border-white/10 bg-black/25 p-3">Brand: {product.brand}</div>
               <div className="rounded-2xl border border-white/10 bg-black/25 p-3">Seller: {product.storeName}</div>
               <div className="rounded-2xl border border-white/10 bg-black/25 p-3">Condition: {product.condition}</div>
-              <div className="rounded-2xl border border-white/10 bg-black/25 p-3">Shipping: {product.freeShipping ? "Free" : `$${product.price >= 300 ? 18 : 12}`}</div>
+              <div className="rounded-2xl border border-white/10 bg-black/25 p-3">Shipping: {product.freeShipping ? "Free" : `$${product.shippingPrice.toFixed(2)}`}</div>
             </div>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <button type="button" className="flex-1 rounded-full bg-amber-300 px-5 py-3 text-sm font-bold uppercase tracking-[0.25em] text-black">
-                Add to Cart
-              </button>
-              <button type="button" className="flex-1 rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-bold uppercase tracking-[0.25em] text-white">
-                Buy Now
-              </button>
-            </div>
+            <MarketplaceProductActions product={product} />
           </div>
         </div>
 

@@ -41,6 +41,8 @@ export type MarketplaceProductCardView = {
   inStock: boolean;
   brand: string;
   sellerId: string | null;
+  shippingPrice: number;
+  status: MarketplaceProductStatus;
 };
 
 export type MarketplaceQueryFilters = {
@@ -74,6 +76,8 @@ const fallbackProducts: MarketplaceProductCardView[] = [
     inStock: true,
     brand: "Velvet & Vine",
     sellerId: "demo-seller-1",
+    shippingPrice: 18,
+    status: "active",
   },
   {
     id: "seller-product-2",
@@ -91,6 +95,8 @@ const fallbackProducts: MarketplaceProductCardView[] = [
     inStock: true,
     brand: "Velvet & Vine",
     sellerId: "demo-seller-1",
+    shippingPrice: 0,
+    status: "active",
   },
   {
     id: "seller-product-3",
@@ -108,6 +114,8 @@ const fallbackProducts: MarketplaceProductCardView[] = [
     inStock: true,
     brand: "Collector Vault",
     sellerId: "demo-seller-2",
+    shippingPrice: 0,
+    status: "active",
   },
 ];
 
@@ -132,6 +140,8 @@ function normalizeMarketplaceProduct(row: Partial<MarketplaceProductRecord> | nu
     inStock: Number(row.inventory_quantity ?? 0) > 0,
     brand: row.brand ?? "Seller brand",
     sellerId: row.seller_id ?? null,
+    shippingPrice: Boolean(row.free_shipping) ? 0 : Number(row.shipping_price ?? 0),
+    status: (row.status ?? "draft") as MarketplaceProductStatus,
   };
 }
 
