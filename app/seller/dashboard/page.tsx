@@ -1,80 +1,116 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { MarketplaceCard } from "@/components/marketplace/MarketplaceCard";
-import { StatusBadge } from "@/components/marketplace/StatusBadge";
-import { sellerProfileData, sellerProductCatalog } from "@/lib/marketplace-data";
+import { SellerShell } from "@/components/seller/SellerShell";
+import { getSellerDashboardMetrics, getSellerIdentity, getSellerProductsPortal, type SellerDashboardMetrics } from "@/lib/seller-portal";
+
+function currency(cents: number) {
+  return `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 export default function SellerDashboardPage() {
+  const [loading, setLoading] = useState(true);
+  const [storeName, setStoreName] = useState("Seller store");
+  const [metrics, setMetrics] = useState<SellerDashboardMetrics | null>(null);
+  const [productRows, setProductRows] = useState<Array<Record<string, unknown>>>([]);
+
+  useEffect(() => {
+    void (async () => {
+      const [identity, dashboardMetrics, products] = await Promise.all([
+        getSellerIdentity(),
+        getSellerDashboardMetrics(),
+        getSellerProductsPortal(),
+      ]);
+
+      if (identity?.storeName) {
+        setStoreName(identity.storeName);
+      }
+
+      setMetrics(dashboardMetrics);
+      setProductRows(products.slice(0, 5));
+      setLoading(false);
+    })();
+  }, []);
+
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#090909_0%,#111111_35%,#0b0b0b_100%)] text-white">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6 rounded-[30px] border border-amber-300/20 bg-white/[0.03] p-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.42em] text-amber-200/80">Seller dashboard</p>
-              <h1 className="mt-2 text-3xl font-semibold">{sellerProfileData.storeName}</h1>
-            </div>
-            <StatusBadge status={sellerProfileData.status} />
-          </div>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-4">
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5"><p className="text-[10px] uppercase tracking-[0.35em] text-amber-200/80">Listings</p><p className="mt-3 text-3xl font-semibold">{sellerProductCatalog.length}</p></div>
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5"><p className="text-[10px] uppercase tracking-[0.35em] text-amber-200/80">Inventory</p><p className="mt-3 text-3xl font-semibold">{sellerProductCatalog.reduce((sum, item) => sum + item.inventoryQuantity, 0)}</p></div>
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5"><p className="text-[10px] uppercase tracking-[0.35em] text-amber-200/80">Featured</p><p className="mt-3 text-3xl font-semibold">{sellerProductCatalog.filter((item) => item.featured).length}</p></div>
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5"><p className="text-[10px] uppercase tracking-[0.35em] text-amber-200/80">Sales</p><p className="mt-3 text-3xl font-semibold">$18.4K</p></div>
-        </div>
-
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <MarketplaceCard title="Inventory management" description="Review active listings, inventory counts, pricing, and shipping settings.">
-            <div className="space-y-3">
-              {sellerProductCatalog.map((product) => (
-                <div key={product.id} className="rounded-[22px] border border-white/10 bg-black/25 p-4">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <p className="text-lg font-semibold text-white">{product.title}</p>
-                      <p className="mt-1 text-sm text-zinc-300">{product.category} • {product.condition}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <StatusBadge status={product.status} />
-                      <Link href={`/seller/products/${product.id}/edit`} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white">
-                        Edit
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="mt-4 grid gap-3 text-sm text-zinc-300 sm:grid-cols-3">
-                    <span>Price: ${product.price}</span>
-                    <span>Inventory: {product.inventoryQuantity}</span>
-                    <span>Shipping: ${product.shippingPrice}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </MarketplaceCard>
-
-          <MarketplaceCard title="Seller profile" description="Store details and status summary.">
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <img src={sellerProfileData.logoUrl} alt={sellerProfileData.storeName} className="h-16 w-16 rounded-full object-cover" />
-                <div>
-                  <p className="text-lg font-semibold text-white">{sellerProfileData.storeName}</p>
-                  <p className="text-sm text-zinc-300">{sellerProfileData.contactEmail}</p>
-                </div>
-              </div>
-              <p className="text-sm text-zinc-300">{sellerProfileData.bio}</p>
-              <div className="rounded-2xl border border-white/10 bg-black/25 p-3 text-sm text-zinc-200">
-                Approval: <span className="font-semibold text-white">{sellerProfileData.status}</span>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <Link href="/seller/profile" className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white">View profile</Link>
-                <Link href="/seller/products/new" className="rounded-full bg-amber-300 px-4 py-2 text-sm font-bold uppercase tracking-[0.2em] text-black">Add product</Link>
-                <Link href="/seller/payments" className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white">Payments</Link>
-                <Link href="/seller/orders" className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white">Orders</Link>
-                <Link href="/seller/earnings" className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white">Earnings</Link>
-              </div>
-            </div>
-          </MarketplaceCard>
-        </div>
+    <SellerShell
+      title={storeName}
+      subtitle="Revenue, orders, product velocity, and payout status in one command center."
+      rightSlot={
+        <Link href="/seller/products/new" className="rounded-full bg-amber-300 px-5 py-2.5 text-sm font-bold uppercase tracking-[0.2em] text-black">
+          Add product
+        </Link>
+      }
+    >
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <MetricCard label="Total revenue" value={loading ? "..." : currency(metrics?.totalRevenueCents ?? 0)} />
+        <MetricCard label="Pending payouts" value={loading ? "..." : currency(metrics?.pendingPayoutCents ?? 0)} />
+        <MetricCard label="Available balance" value={loading ? "..." : currency(metrics?.availableBalanceCents ?? 0)} />
+        <MetricCard label="Total orders" value={loading ? "..." : String(metrics?.totalOrders ?? 0)} />
+        <MetricCard label="Products sold" value={loading ? "..." : String(metrics?.productsSold ?? 0)} />
+        <MetricCard label="Views" value={loading ? "..." : String(metrics?.views ?? 0)} />
+        <MetricCard label="Conversion rate" value={loading ? "..." : `${metrics?.conversionRate ?? 0}%`} />
+        <MetricCard label="Recent orders" value={loading ? "..." : String(metrics?.recentOrders.length ?? 0)} />
       </div>
-    </main>
+
+      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <MarketplaceCard title="Recent orders" description="Most recent buyer activity tied to your listings.">
+          <div className="space-y-3">
+            {(metrics?.recentOrders ?? []).map((order) => (
+              <Link key={String(order.orderId)} href={`/seller/orders/${String(order.orderId)}`} className="block rounded-2xl border border-white/10 bg-black/30 p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="font-semibold text-white">{String(order.order_number ?? order.orderId)}</p>
+                    <p className="text-xs uppercase tracking-[0.22em] text-zinc-500">{new Date(String(order.created_at ?? new Date().toISOString())).toLocaleString()}</p>
+                  </div>
+                  <p className="text-xs uppercase tracking-[0.22em] text-zinc-300">{String(order.payment_status ?? "pending")} • {String(order.fulfillment_status ?? "pending")}</p>
+                </div>
+              </Link>
+            ))}
+            {!loading && (metrics?.recentOrders.length ?? 0) === 0 ? <p className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300">No recent orders yet.</p> : null}
+          </div>
+        </MarketplaceCard>
+
+        <MarketplaceCard title="Seller notifications" description="Operational prompts for payouts, approvals, and traffic health.">
+          <ul className="space-y-3">
+            {(metrics?.notifications ?? []).map((message) => (
+              <li key={message} className="rounded-2xl border border-amber-300/35 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">{message}</li>
+            ))}
+            {!loading && (metrics?.notifications.length ?? 0) === 0 ? <li className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-zinc-300">No alerts. Seller operations are healthy.</li> : null}
+          </ul>
+        </MarketplaceCard>
+      </div>
+
+      <MarketplaceCard title="Top listings snapshot" description="Quick view of inventory and status across active catalog items.">
+        <div className="space-y-3">
+          {productRows.map((product) => (
+            <div key={String(product.id)} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-white">{String(product.title ?? "Untitled product")}</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">{String(product.category ?? "uncategorized")} • {String(product.status ?? "draft")}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-amber-300">${Number(product.price ?? 0).toFixed(2)}</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Stock {Number(product.inventory_quantity ?? 0)}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+          {!loading && productRows.length === 0 ? <p className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300">No products yet. Add your first listing to begin tracking conversion.</p> : null}
+        </div>
+      </MarketplaceCard>
+    </SellerShell>
+  );
+}
+
+function MetricCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+      <p className="text-[10px] uppercase tracking-[0.35em] text-amber-200/80">{label}</p>
+      <p className="mt-3 text-3xl font-semibold text-white">{value}</p>
+    </div>
   );
 }

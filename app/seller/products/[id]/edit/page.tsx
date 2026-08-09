@@ -1,98 +1,146 @@
-import { FormField } from "../../../../../components/marketplace/FormField";
-import { MarketplaceCard } from "../../../../../components/marketplace/MarketplaceCard";
-import { marketplaceCategoryOptions, productConditionOptions } from "../../../../../lib/marketplace-data";
+"use client";
+
+import { FormEvent, useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { MarketplaceCard } from "@/components/marketplace/MarketplaceCard";
+import { ProductEditorForm } from "@/components/seller/ProductEditorForm";
+import { SellerShell } from "@/components/seller/SellerShell";
+import {
+  deleteSellerProductPortal,
+  getSellerProductByIdPortal,
+  updateSellerProductPortal,
+  type SellerProductForm,
+} from "@/lib/seller-portal";
+
+const blankState: SellerProductForm = {
+  title: "",
+  description: "",
+  category: "Home & Furniture",
+  subcategory: "",
+  brand: "",
+  sku: "",
+  status: "draft",
+  price: 0,
+  compareAtPrice: 0,
+  inventoryQuantity: 0,
+  condition: "new",
+  shippingPrice: 0,
+  freeShipping: false,
+  featured: false,
+  slug: "",
+  variantsJson: "[]",
+  imagesCsv: "",
+  shippingClass: "standard",
+  weightGrams: 0,
+  seoTitle: "",
+  seoDescription: "",
+};
 
 export default function EditSellerProductPage() {
-  return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#090909_0%,#111111_35%,#0b0b0b_100%)] text-white">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6 rounded-[30px] border border-amber-300/20 bg-white/[0.03] p-6">
-          <p className="text-[10px] uppercase tracking-[0.42em] text-amber-200/80">Seller listing</p>
-          <h1 className="mt-2 text-3xl font-semibold">Edit product</h1>
-        </div>
+  const params = useParams<{ id: string }>();
+  const router = useRouter();
+  const [form, setForm] = useState<SellerProductForm>(blankState);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
-        <MarketplaceCard title="Product management" description="Edit inventory, pricing, conditions, and shipping details before publishing updates.">
-          <form className="grid gap-4 md:grid-cols-2">
-            <FormField label="Product title">
-              <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" defaultValue="Brass Floor Lamp" />
-            </FormField>
-            <FormField label="Status">
-              <select className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" defaultValue="active">
-                <option value="active">Active</option>
-                <option value="draft">Draft</option>
-                <option value="paused">Paused</option>
-                <option value="archived">Archived</option>
-              </select>
-            </FormField>
-            <FormField label="Category" fullWidth>
-              <select className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" defaultValue="Home & Furniture">
-                {marketplaceCategoryOptions.map((category) => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-            </FormField>
-            <FormField label="Subcategory">
-              <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" defaultValue="Lamps" />
-            </FormField>
-            <FormField label="Brand">
-              <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" defaultValue="Velvet & Vine" />
-            </FormField>
-            <FormField label="SKU">
-              <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" defaultValue="VVM-LAMP-001" />
-            </FormField>
-            <FormField label="Price">
-              <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" type="number" defaultValue={289} />
-            </FormField>
-            <FormField label="Compare-at price">
-              <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" type="number" defaultValue={349} />
-            </FormField>
-            <FormField label="Inventory quantity">
-              <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" type="number" defaultValue={10} />
-            </FormField>
-            <FormField label="Condition">
-              <select className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" defaultValue="New">
-                {productConditionOptions.map((condition) => (
-                  <option key={condition} value={condition}>{condition}</option>
-                ))}
-              </select>
-            </FormField>
-            <FormField label="Shipping price">
-              <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" type="number" defaultValue={18} />
-            </FormField>
-            <FormField label="Free shipping">
-              <select className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" defaultValue="No">
-                <option value="No">No</option>
-                <option value="Yes">Yes</option>
-              </select>
-            </FormField>
-            <FormField label="Featured flag" fullWidth>
-              <select className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" defaultValue="Yes">
-                <option value="Yes">Yes</option>
-                <option value="No">No</option>
-              </select>
-            </FormField>
-            <FormField label="Product images" fullWidth>
-              <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" defaultValue="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80" />
-            </FormField>
-            <FormField label="Description" fullWidth>
-              <textarea className="min-h-32 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" defaultValue="Warm ambient floor lamp with a premium brass finish and linen shade." />
-            </FormField>
-            <div className="md:col-span-2 flex justify-between gap-3 pt-2">
-              <button type="button" className="rounded-full border border-rose-400/30 bg-rose-500/10 px-5 py-2.5 text-sm font-semibold text-rose-200">
-                Delete product
-              </button>
-              <div className="flex gap-3">
-                <button type="button" className="rounded-full border border-white/10 bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-white">
-                  Save draft
-                </button>
-                <button type="submit" className="rounded-full bg-amber-300 px-5 py-2.5 text-sm font-bold uppercase tracking-[0.2em] text-black">
-                  Update listing
-                </button>
-              </div>
-            </div>
-          </form>
-        </MarketplaceCard>
-      </div>
-    </main>
+  useEffect(() => {
+    void (async () => {
+      if (!params.id) {
+        setLoading(false);
+        return;
+      }
+
+      const product = await getSellerProductByIdPortal(params.id);
+      if (!product) {
+        setMessage("Product not found.");
+        setLoading(false);
+        return;
+      }
+
+      setForm({
+        title: String(product.title ?? ""),
+        description: String(product.description ?? ""),
+        category: String(product.category ?? "Home & Furniture"),
+        subcategory: String(product.subcategory ?? ""),
+        brand: String(product.brand ?? ""),
+        sku: String(product.sku ?? ""),
+        status: String(product.status ?? "draft") as SellerProductForm["status"],
+        price: Number(product.price ?? 0),
+        compareAtPrice: Number(product.compare_at_price ?? 0),
+        inventoryQuantity: Number(product.inventory_quantity ?? 0),
+        condition: String(product.condition ?? "new") as SellerProductForm["condition"],
+        shippingPrice: Number(product.shipping_price ?? 0),
+        freeShipping: Boolean(product.free_shipping),
+        featured: Boolean(product.featured),
+        slug: String(product.slug ?? ""),
+        variantsJson: JSON.stringify(product.variants ?? [], null, 2),
+        imagesCsv: Array.isArray(product.product_images) ? product.product_images.join(", ") : "",
+        shippingClass: String(product.shipping_class ?? "standard"),
+        weightGrams: Number(product.weight_grams ?? 0),
+        seoTitle: String(product.seo_title ?? ""),
+        seoDescription: String(product.seo_description ?? ""),
+      });
+
+      setLoading(false);
+    })();
+  }, [params.id]);
+
+  async function save(mode: "draft" | "active") {
+    if (!params.id) return;
+
+    setSaving(true);
+    setMessage(null);
+    const result = await updateSellerProductPortal(params.id, { ...form, status: mode });
+    if (!result.ok) {
+      setMessage(result.error ?? "Unable to update listing.");
+      setSaving(false);
+      return;
+    }
+
+    setMessage(mode === "draft" ? "Draft saved." : "Listing updated.");
+    router.push("/seller/products");
+  }
+
+  async function removeProduct() {
+    if (!params.id) return;
+
+    setSaving(true);
+    setMessage(null);
+    const result = await deleteSellerProductPortal(params.id);
+    if (!result.ok) {
+      setMessage(result.error ?? "Unable to delete product.");
+      setSaving(false);
+      return;
+    }
+
+    router.push("/seller/products");
+  }
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void save("active");
+  }
+
+  return (
+    <SellerShell title="Edit product" subtitle="Control listing state, pricing, variants, and SEO before publishing updates.">
+      <MarketplaceCard title="Product management" description="Advanced product lifecycle and inventory controls.">
+        {loading ? <p className="rounded-2xl border border-white/10 bg-black/30 p-4 text-zinc-300">Loading product...</p> : null}
+        {!loading ? (
+          <ProductEditorForm
+            value={form}
+            onChange={setForm}
+            onSubmit={submit}
+            submitLabel="Update listing"
+            secondaryLabel="Save draft"
+            onSecondaryAction={() => void save("draft")}
+            dangerLabel="Delete product"
+            onDangerAction={() => void removeProduct()}
+            disabled={saving}
+          />
+        ) : null}
+        {message ? <p className="mt-3 text-sm text-amber-100">{message}</p> : null}
+      </MarketplaceCard>
+    </SellerShell>
   );
 }
