@@ -46,7 +46,7 @@ export function UserMenu() {
           </span>
           <span className="hidden sm:inline">{session.name}</span>
         </summary>
-        <div className="absolute right-0 top-full mt-2 w-52 rounded-[20px] border border-white/10 bg-black/90 p-2 shadow-lg">
+        <div className="absolute right-0 top-full mt-2 w-56 rounded-[20px] border border-white/10 bg-black/90 p-2 shadow-lg">
           <Link href="/account" className="block rounded-xl px-3 py-2 text-sm text-zinc-200 hover:bg-white/[0.04] hover:text-amber-100">
             Dashboard
           </Link>
@@ -58,6 +58,12 @@ export function UserMenu() {
           </Link>
           <Link href="/account/wishlist" className="block rounded-xl px-3 py-2 text-sm text-zinc-200 hover:bg-white/[0.04] hover:text-amber-100">
             Wishlist
+          </Link>
+          <Link href="/account/order-history" className="block rounded-xl px-3 py-2 text-sm text-zinc-200 hover:bg-white/[0.04] hover:text-amber-100">
+            Order History
+          </Link>
+          <Link href="/seller/apply" className="block rounded-xl px-3 py-2 text-sm text-amber-100 hover:bg-amber-300/10">
+            Become a Seller
           </Link>
           <button
             type="button"
