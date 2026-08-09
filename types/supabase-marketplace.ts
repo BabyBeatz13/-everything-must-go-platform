@@ -93,6 +93,141 @@ export type MarketplaceDatabase = {
           created_at?: string;
         };
       };
+      seller_profiles: {
+        Row: {
+          id: string;
+          profile_id: string;
+          store_name: string;
+          logo_url: string | null;
+          bio: string | null;
+          contact_email: string | null;
+          status: "pending" | "approved" | "rejected" | "suspended";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          profile_id: string;
+          store_name: string;
+          logo_url?: string | null;
+          bio?: string | null;
+          contact_email?: string | null;
+          status?: "pending" | "approved" | "rejected" | "suspended";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          profile_id?: string;
+          store_name?: string;
+          logo_url?: string | null;
+          bio?: string | null;
+          contact_email?: string | null;
+          status?: "pending" | "approved" | "rejected" | "suspended";
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      seller_applications: {
+        Row: {
+          id: string;
+          profile_id: string;
+          business_name: string;
+          store_name: string;
+          contact_email: string;
+          bio: string | null;
+          status: "pending" | "approved" | "rejected" | "suspended";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          profile_id: string;
+          business_name: string;
+          store_name: string;
+          contact_email: string;
+          bio?: string | null;
+          status?: "pending" | "approved" | "rejected" | "suspended";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          profile_id?: string;
+          business_name?: string;
+          store_name?: string;
+          contact_email?: string;
+          bio?: string | null;
+          status?: "pending" | "approved" | "rejected" | "suspended";
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      marketplace_products: {
+        Row: {
+          id: string;
+          seller_id: string;
+          title: string;
+          description: string | null;
+          category: string;
+          subcategory: string | null;
+          brand: string | null;
+          price: number;
+          compare_at_price: number | null;
+          inventory_quantity: number;
+          sku: string;
+          condition: "new" | "used" | "vintage" | "collectible" | "refurbished";
+          shipping_price: number;
+          free_shipping: boolean;
+          product_images: string[] | null;
+          featured: boolean;
+          status: "draft" | "active" | "paused" | "archived";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          seller_id: string;
+          title: string;
+          description?: string | null;
+          category: string;
+          subcategory?: string | null;
+          brand?: string | null;
+          price?: number;
+          compare_at_price?: number | null;
+          inventory_quantity?: number;
+          sku?: string;
+          condition?: "new" | "used" | "vintage" | "collectible" | "refurbished";
+          shipping_price?: number;
+          free_shipping?: boolean;
+          product_images?: string[] | null;
+          featured?: boolean;
+          status?: "draft" | "active" | "paused" | "archived";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          seller_id?: string;
+          title?: string;
+          description?: string | null;
+          category?: string;
+          subcategory?: string | null;
+          brand?: string | null;
+          price?: number;
+          compare_at_price?: number | null;
+          inventory_quantity?: number;
+          sku?: string;
+          condition?: "new" | "used" | "vintage" | "collectible" | "refurbished";
+          shipping_price?: number;
+          free_shipping?: boolean;
+          product_images?: string[] | null;
+          featured?: boolean;
+          status?: "draft" | "active" | "paused" | "archived";
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       products: {
         Row: {
           id: string;
@@ -355,6 +490,9 @@ export type MarketplaceDatabase = {
 export type Profile = MarketplaceDatabase["public"]["Tables"]["profiles"]["Row"];
 export type Vendor = MarketplaceDatabase["public"]["Tables"]["vendors"]["Row"];
 export type Category = MarketplaceDatabase["public"]["Tables"]["categories"]["Row"];
+export type SellerProfile = MarketplaceDatabase["public"]["Tables"]["seller_profiles"]["Row"];
+export type SellerApplication = MarketplaceDatabase["public"]["Tables"]["seller_applications"]["Row"];
+export type MarketplaceProduct = MarketplaceDatabase["public"]["Tables"]["marketplace_products"]["Row"];
 export type Product = MarketplaceDatabase["public"]["Tables"]["products"]["Row"];
 export type ProductImage = MarketplaceDatabase["public"]["Tables"]["product_images"]["Row"];
 export type AffiliateProduct = MarketplaceDatabase["public"]["Tables"]["affiliate_products"]["Row"];

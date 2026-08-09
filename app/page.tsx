@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ProductCard } from "../components/ProductCard";
+import { MarketplaceProductCard } from "../components/MarketplaceProductCard";
 import { UserMenu } from "../components/account/UserMenu";
+import { getMarketplaceProducts } from "../lib/marketplace";
 import { products } from "../data/products";
 import type { ProductCategory } from "../types/product";
 
@@ -112,6 +114,18 @@ function CartIcon() {
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<"All" | ProductCategory>("All");
+  const [marketplaceSearch, setMarketplaceSearch] = useState("");
+  const [liveMarketplaceProducts, setLiveMarketplaceProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    void (async () => {
+      const products = await getMarketplaceProducts({
+        category: selectedCategory === "All" ? undefined : selectedCategory,
+        search: marketplaceSearch || undefined,
+      });
+      setLiveMarketplaceProducts(products);
+    })();
+  }, [selectedCategory, marketplaceSearch]);
 
   const filteredProducts = useMemo(() => {
     return selectedCategory === "All"
@@ -122,6 +136,7 @@ export default function Home() {
   const featuredProducts = filteredProducts.filter((product) => product.featured).slice(0, 8);
   const bestSellers = filteredProducts.slice(0, 4);
   const newArrivals = filteredProducts.slice(8, 12);
+  const marketplaceFeatured = liveMarketplaceProducts.filter((product) => product.featured).slice(0, 4);
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#090909_0%,#111111_35%,#0b0b0b_100%)] text-white">
