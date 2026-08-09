@@ -59,7 +59,7 @@ export function UserMenu() {
           <Link href="/account/wishlist" className="block rounded-xl px-3 py-2 text-sm text-zinc-200 hover:bg-white/[0.04] hover:text-amber-100">
             Wishlist
           </Link>
-          <Link href="/account/order-history" className="block rounded-xl px-3 py-2 text-sm text-zinc-200 hover:bg-white/[0.04] hover:text-amber-100">
+          <Link href="/account/orders" className="block rounded-xl px-3 py-2 text-sm text-zinc-200 hover:bg-white/[0.04] hover:text-amber-100">
             Order History
           </Link>
           <Link href="/seller/apply" className="block rounded-xl px-3 py-2 text-sm text-amber-100 hover:bg-amber-300/10">

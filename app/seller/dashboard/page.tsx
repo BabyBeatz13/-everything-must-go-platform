@@ -67,6 +67,9 @@ export default function SellerDashboardPage() {
               <div className="flex flex-wrap gap-3">
                 <Link href="/seller/profile" className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white">View profile</Link>
                 <Link href="/seller/products/new" className="rounded-full bg-amber-300 px-4 py-2 text-sm font-bold uppercase tracking-[0.2em] text-black">Add product</Link>
+                <Link href="/seller/payments" className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white">Payments</Link>
+                <Link href="/seller/orders" className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white">Orders</Link>
+                <Link href="/seller/earnings" className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white">Earnings</Link>
               </div>
             </div>
           </MarketplaceCard>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { calculateCartTotals, getCartItems, groupCartItemsBySeller, type CartItem } from "@/lib/cart";
 import { addSavedAddress, getSavedAddresses, type ShippingAddress, type ShippingAddressInput } from "@/lib/addresses";
+import { getSupabaseAccessToken } from "@/lib/client-auth";
 
 type ContactInfo = {
   email: string;
@@ -28,6 +29,7 @@ export default function CheckoutPage() {
   const [selectedAddressId, setSelectedAddressId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [contact, setContact] = useState<ContactInfo>({ email: "", phone: "" });
   const [newAddress, setNewAddress] = useState<ShippingAddressInput>({
     firstName: "",
@@ -95,6 +97,45 @@ export default function CheckoutPage() {
       setError("");
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Unable to save shipping address.");
+    }
+  }
+
+  async function onContinueToSecurePayment() {
+    if (hasUnavailable || !selectedAddressId || !contact.email || checkoutLoading) {
+      return;
+    }
+
+    setCheckoutLoading(true);
+    setError("");
+
+    try {
+      const token = await getSupabaseAccessToken();
+      if (!token) {
+        throw new Error("Please sign in again to continue checkout.");
+      }
+
+      const response = await fetch("/api/checkout/create-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          addressId: selectedAddressId,
+          contactEmail: contact.email,
+          contactPhone: contact.phone,
+        }),
+      });
+
+      const payload = (await response.json()) as { checkoutUrl?: string; error?: string };
+      if (!response.ok || !payload.checkoutUrl) {
+        throw new Error(payload.error || "Unable to start secure payment.");
+      }
+
+      window.location.href = payload.checkoutUrl;
+    } catch (checkoutError) {
+      setError(checkoutError instanceof Error ? checkoutError.message : "Unable to start secure payment.");
+      setCheckoutLoading(false);
     }
   }
 
@@ -253,12 +294,13 @@ export default function CheckoutPage() {
 
           <button
             type="button"
-            disabled={hasUnavailable || !selectedAddressId || !contact.email}
-            className="mt-6 inline-flex w-full cursor-not-allowed justify-center rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-bold uppercase tracking-[0.24em] text-zinc-400"
+            onClick={() => void onContinueToSecurePayment()}
+            disabled={hasUnavailable || !selectedAddressId || !contact.email || checkoutLoading}
+            className={`mt-6 inline-flex w-full justify-center rounded-full px-5 py-3 text-sm font-bold uppercase tracking-[0.24em] ${hasUnavailable || !selectedAddressId || !contact.email || checkoutLoading ? "cursor-not-allowed border border-white/10 bg-white/[0.04] text-zinc-400" : "bg-amber-300 text-black"}`}
           >
-            Continue to Secure Payment
+            {checkoutLoading ? "Redirecting to Stripe..." : "Continue to Secure Payment"}
           </button>
-          {/* TODO(phase-9.2): Replace this placeholder action with real payment session creation and order capture. */}
+          <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-amber-100/80">Stripe test mode</p>
 
           {hasUnavailable ? <p className="mt-3 text-sm text-rose-100">Resolve unavailable items before proceeding.</p> : null}
         </aside>
