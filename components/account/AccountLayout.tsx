@@ -7,6 +7,7 @@ const navItems = [
   { href: "/account/wishlist", label: "Wishlist" },
   { href: "/account/recently-viewed", label: "Recently Viewed" },
   { href: "/account/orders", label: "Order History" },
+  { href: "/account/cases", label: "Cases" },
   { href: "/account/cart", label: "Saved Cart" },
 ];
 
