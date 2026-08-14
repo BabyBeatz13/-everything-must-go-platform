@@ -37,11 +37,34 @@ export const marketplaceCategories = [
   "Comics",
   "Retro Gaming",
   "Pet Supplies",
+  "Fine Jewelry",
+  "Gold Chains",
+  "Cuban Links",
+  "Diamond Chains",
+  "Necklaces",
+  "Pendants",
+  "Earrings",
+  "Bracelets",
+  "Rings",
+  "Watches",
+  "Luxury Jewelry",
+  "Vintage Jewelry",
+  "International Jewelry",
+  "Handbags & Bags",
+  "Luxury Handbags",
+  "Designer Handbags",
+  "Carrying Bags",
+  "Travel Bags",
+  "Backpacks",
+  "Briefcases",
+  "Duffel Bags",
+  "Vintage Bags",
+  "Collectible Bags",
 ] as const;
 
 export type MarketplaceCategory = (typeof marketplaceCategories)[number];
 
-export const productConditions = ["New", "Used", "Vintage", "Collectible", "Refurbished"] as const;
+export const productConditions = ["New", "Used", "Refurbished", "Vintage", "Collectible", "Open Box"] as const;
 export type ProductCondition = (typeof productConditions)[number];
 
 export type SellerApprovalStatus = "Pending" | "Approved" | "Rejected" | "Suspended";

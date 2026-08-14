@@ -28,14 +28,21 @@ export type SellerProductForm = {
 };
 
 export type SellerDashboardMetrics = {
-  totalRevenueCents: number;
+  grossSalesCents: number;
+  netEarningsCents: number;
+  platformFeesCents: number;
   pendingPayoutCents: number;
-  availableBalanceCents: number;
+  completedPayoutCents: number;
   totalOrders: number;
   productsSold: number;
+  activeListings: number;
+  draftListings: number;
+  lowStockProducts: number;
+  outOfStockProducts: number;
   views: number;
   conversionRate: number;
   recentOrders: Array<Record<string, unknown>>;
+  recentPayouts: Array<Record<string, unknown>>;
   notifications: string[];
 };
 
@@ -84,12 +91,14 @@ export async function getSellerDashboardMetrics(): Promise<SellerDashboardMetric
     orderItemsRes,
     ordersRes,
     productsRes,
+    payoutsRes,
   ] = await Promise.all([
-    supabase.from("seller_earnings").select("seller_net_cents, earning_status").eq("seller_id", identity.sellerId),
-    supabase.from("seller_transfers").select("seller_amount_cents, transfer_status").eq("seller_id", identity.sellerId),
-    supabase.from("order_items").select("quantity").eq("seller_id", identity.sellerId),
+    supabase.from("seller_earnings").select("seller_net_cents, gross_sales_cents, platform_fee_cents, earning_status").eq("seller_id", identity.sellerId),
+    supabase.from("seller_transfers").select("seller_amount_cents, gross_sales_cents, platform_fee_cents, transfer_status, created_at").eq("seller_id", identity.sellerId),
+    supabase.from("order_items").select("quantity, seller_earnings_cents, platform_commission_cents").eq("seller_id", identity.sellerId),
     supabase.from("order_items").select("order_id, orders!inner(order_number, created_at, payment_status, fulfillment_status)").eq("seller_id", identity.sellerId),
-    supabase.from("marketplace_products").select("view_count").eq("seller_id", identity.sellerId),
+    supabase.from("marketplace_products").select("id, title, price, status, inventory_quantity, view_count, sold_count").eq("seller_id", identity.sellerId),
+    supabase.from("seller_transfers").select("seller_amount_cents, transfer_status, created_at").eq("seller_id", identity.sellerId).order("created_at", { ascending: false }).limit(6),
   ]);
 
   const earnings = (earningsRes.data as Array<Record<string, unknown>>) ?? [];
@@ -97,12 +106,15 @@ export async function getSellerDashboardMetrics(): Promise<SellerDashboardMetric
   const orderItems = (orderItemsRes.data as Array<Record<string, unknown>>) ?? [];
   const ordersRaw = (ordersRes.data as Array<Record<string, unknown>>) ?? [];
   const products = (productsRes.data as Array<Record<string, unknown>>) ?? [];
+  const recentPayouts = (payoutsRes.data as Array<Record<string, unknown>>) ?? [];
 
-  const totalRevenueCents = earnings.reduce((sum, row) => sum + Number(row.seller_net_cents ?? 0), 0);
+  const grossSalesCents = earnings.reduce((sum, row) => sum + Number(row.gross_sales_cents ?? 0), 0);
+  const netEarningsCents = earnings.reduce((sum, row) => sum + Number(row.seller_net_cents ?? 0), 0);
+  const platformFeesCents = earnings.reduce((sum, row) => sum + Number(row.platform_fee_cents ?? 0), 0);
   const pendingPayoutCents = transfers
     .filter((row) => String(row.transfer_status) === "pending")
     .reduce((sum, row) => sum + Number(row.seller_amount_cents ?? 0), 0);
-  const availableBalanceCents = transfers
+  const completedPayoutCents = transfers
     .filter((row) => String(row.transfer_status) === "completed")
     .reduce((sum, row) => sum + Number(row.seller_amount_cents ?? 0), 0);
 
@@ -118,6 +130,10 @@ export async function getSellerDashboardMetrics(): Promise<SellerDashboardMetric
 
   const totalOrders = orderMap.size;
   const productsSold = orderItems.reduce((sum, row) => sum + Number(row.quantity ?? 0), 0);
+  const activeListings = products.filter((row) => String(row.status) === "active").length;
+  const draftListings = products.filter((row) => String(row.status) === "draft").length;
+  const lowStockProducts = products.filter((row) => Number(row.inventory_quantity ?? 0) > 0 && Number(row.inventory_quantity ?? 0) <= 5).length;
+  const outOfStockProducts = products.filter((row) => Number(row.inventory_quantity ?? 0) === 0).length;
   const views = products.reduce((sum, row) => sum + Number(row.view_count ?? 0), 0);
   const conversionRate = views > 0 ? Number(((totalOrders / views) * 100).toFixed(2)) : 0;
 
@@ -125,16 +141,24 @@ export async function getSellerDashboardMetrics(): Promise<SellerDashboardMetric
   if (pendingPayoutCents > 0) notifications.push("You have pending payouts waiting for transfer completion.");
   if (identity.status !== "approved") notifications.push("Seller account is not approved yet. Some features are limited.");
   if (recentOrders.length === 0) notifications.push("No recent orders yet. Promote featured products to drive traffic.");
+  if (outOfStockProducts > 0) notifications.push(`${outOfStockProducts} listings are out of stock and may need replenishment.`);
 
   return {
-    totalRevenueCents,
+    grossSalesCents,
+    netEarningsCents,
+    platformFeesCents,
     pendingPayoutCents,
-    availableBalanceCents,
+    completedPayoutCents,
     totalOrders,
     productsSold,
+    activeListings,
+    draftListings,
+    lowStockProducts,
+    outOfStockProducts,
     views,
     conversionRate,
     recentOrders,
+    recentPayouts,
     notifications,
   };
 }

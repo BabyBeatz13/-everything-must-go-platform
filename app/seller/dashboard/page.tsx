@@ -45,14 +45,19 @@ export default function SellerDashboardPage() {
       }
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Total revenue" value={loading ? "..." : currency(metrics?.totalRevenueCents ?? 0)} />
+        <MetricCard label="Gross sales" value={loading ? "..." : currency(metrics?.grossSalesCents ?? 0)} />
+        <MetricCard label="Net seller earnings" value={loading ? "..." : currency(metrics?.netEarningsCents ?? 0)} />
+        <MetricCard label="Platform fees" value={loading ? "..." : currency(metrics?.platformFeesCents ?? 0)} />
         <MetricCard label="Pending payouts" value={loading ? "..." : currency(metrics?.pendingPayoutCents ?? 0)} />
-        <MetricCard label="Available balance" value={loading ? "..." : currency(metrics?.availableBalanceCents ?? 0)} />
+        <MetricCard label="Completed payouts" value={loading ? "..." : currency(metrics?.completedPayoutCents ?? 0)} />
         <MetricCard label="Total orders" value={loading ? "..." : String(metrics?.totalOrders ?? 0)} />
         <MetricCard label="Products sold" value={loading ? "..." : String(metrics?.productsSold ?? 0)} />
-        <MetricCard label="Views" value={loading ? "..." : String(metrics?.views ?? 0)} />
+        <MetricCard label="Active listings" value={loading ? "..." : String(metrics?.activeListings ?? 0)} />
+        <MetricCard label="Draft listings" value={loading ? "..." : String(metrics?.draftListings ?? 0)} />
+        <MetricCard label="Low-stock products" value={loading ? "..." : String(metrics?.lowStockProducts ?? 0)} />
+        <MetricCard label="Out-of-stock products" value={loading ? "..." : String(metrics?.outOfStockProducts ?? 0)} />
+        <MetricCard label="Product views" value={loading ? "..." : String(metrics?.views ?? 0)} />
         <MetricCard label="Conversion rate" value={loading ? "..." : `${metrics?.conversionRate ?? 0}%`} />
-        <MetricCard label="Recent orders" value={loading ? "..." : String(metrics?.recentOrders.length ?? 0)} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
@@ -83,25 +88,44 @@ export default function SellerDashboardPage() {
         </MarketplaceCard>
       </div>
 
-      <MarketplaceCard title="Top listings snapshot" description="Quick view of inventory and status across active catalog items.">
-        <div className="space-y-3">
-          {productRows.map((product) => (
-            <div key={String(product.id)} className="rounded-2xl border border-white/10 bg-black/30 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-white">{String(product.title ?? "Untitled product")}</p>
-                  <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">{String(product.category ?? "uncategorized")} • {String(product.status ?? "draft")}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-amber-300">${Number(product.price ?? 0).toFixed(2)}</p>
-                  <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Stock {Number(product.inventory_quantity ?? 0)}</p>
+      <div className="grid gap-6 xl:grid-cols-2">
+        <MarketplaceCard title="Recent payouts" description="Recent transfer status and amounts for your store.">
+          <div className="space-y-3">
+            {(metrics?.recentPayouts ?? []).map((payout) => (
+              <div key={String(payout.id ?? `${payout.created_at ?? "payout"}-${Math.random()}`)} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="font-semibold text-white">{String(payout.transfer_status ?? "pending")}</p>
+                    <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">{new Date(String(payout.created_at ?? new Date().toISOString())).toLocaleDateString()}</p>
+                  </div>
+                  <p className="font-semibold text-amber-300">{currency(Number(payout.seller_amount_cents ?? 0))}</p>
                 </div>
               </div>
-            </div>
-          ))}
-          {!loading && productRows.length === 0 ? <p className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300">No products yet. Add your first listing to begin tracking conversion.</p> : null}
-        </div>
-      </MarketplaceCard>
+            ))}
+            {!loading && (metrics?.recentPayouts.length ?? 0) === 0 ? <p className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300">No payouts recorded yet.</p> : null}
+          </div>
+        </MarketplaceCard>
+
+        <MarketplaceCard title="Top listings snapshot" description="Quick view of inventory and status across active catalog items.">
+          <div className="space-y-3">
+            {productRows.map((product) => (
+              <div key={String(product.id)} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-white">{String(product.title ?? "Untitled product")}</p>
+                    <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">{String(product.category ?? "uncategorized")} • {String(product.status ?? "draft")}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-amber-300">${Number(product.price ?? 0).toFixed(2)}</p>
+                    <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Stock {Number(product.inventory_quantity ?? 0)}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {!loading && productRows.length === 0 ? <p className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300">No products yet. Add your first listing to begin tracking conversion.</p> : null}
+          </div>
+        </MarketplaceCard>
+      </div>
     </SellerShell>
   );
 }
