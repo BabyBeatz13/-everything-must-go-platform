@@ -70,50 +70,114 @@ const searchSynonyms: Record<string, string[]> = {
   "nintendo": ["nintendo switch", "console", "retro console"],
 };
 
-const categoryRegistry: Record<string, string[]> = {
-  electronics: ["electronics", "phones", "computers", "gaming", "headphones", "laptops", "tablets", "cameras", "tv", "television", "audio equipment", "home audio"],
-  phones: ["phones", "cell phones", "smartphones", "iphone", "android phones", "mobile phones"],
-  computers: ["computers", "laptops", "desktops", "pc", "apple computers", "macbooks"],
-  gaming: ["gaming", "video games", "consoles", "game systems", "controllers", "gaming accessories"],
-  "vintage gaming": ["vintage gaming", "retro games", "vintage consoles", "retro consoles", "handhelds", "classic gaming"],
-  fashion: ["fashion", "apparel", "bags", "handbags", "designer handbags", "sneakers", "shirts", "fan apparel", "accessories", "vintage fashion"],
-  sneakers: ["sneakers", "trainers", "designer sneakers", "luxury sneakers", "sport sneakers"],
-  shirts: ["shirts", "tees", "tops", "designer shirts", "button down shirts"],
-  "fan apparel": ["fan apparel", "jerseys", "sportswear", "team apparel", "licensed merchandise"],
-  beauty: ["beauty", "cosmetics", "hair", "wigs", "beauty tools", "luxury beauty"],
-  fragrance: ["fragrance", "perfume", "cologne", "men's cologne", "women's perfume", "unisex fragrance", "luxury fragrance", "vintage fragrance", "designer fragrance", "niche fragrance", "gift sets"],
-  cologne: ["cologne", "men's cologne", "fragrance", "male fragrance", "luxury cologne"],
-  perfume: ["perfume", "women's perfume", "fragrance", "luxury perfume", "designer perfume"],
-  "fine jewelry": ["fine jewelry", "gold jewelry", "diamonds", "diamond jewelry", "watches", "necklaces", "pendants", "earrings", "bracelets", "rings", "jewelry"],
-  "gold jewelry": ["gold jewelry", "gold chains", "cuban links", "gold necklaces", "gold bracelets", "gold rings"],
-  diamonds: ["diamonds", "diamond jewelry", "diamond chains", "diamond rings", "diamond earrings", "diamond pendants"],
-  watches: ["watches", "luxury watches", "mens watches", "womens watches", "vintage watches"],
-  "luxury handbags": ["luxury handbags", "designer handbags", "authentic handbags", "premium bags", "leather handbags"],
-  bags: ["bags", "handbags", "crossbody", "totes", "leather bags", "luxury bags"],
-  fitness: ["fitness", "exercise", "training", "workout", "strength", "wellness"],
-  "health & wellness": ["health", "wellness", "supplements", "vitamins", "wellness bundles", "health & wellness"],
-  home: ["home", "living room", "bedroom", "home decor", "interior"],
-  furniture: ["furniture", "home furniture", "living room furniture", "dining room furniture", "lamps", "mirrors", "dressers", "tables", "chairs", "beds", "console", "ottoman", "vintage furniture"],
-  "home decor": ["home decor", "decor", "lighting", "lamps", "mirrors", "accent furniture"],
-  garden: ["garden", "gardening", "outdoor", "plants", "seeds", "flowers"],
-  seeds: ["seeds", "vegetable seeds", "flower seeds", "herb seeds", "fruit seeds", "gardening"],
-  "studio equipment": ["studio", "studio equipment", "recording equipment", "microphones", "audio interfaces", "studio monitors", "music software", "recording gear"],
-  "music software": ["music software", "production software", "plugins", "audio software"],
-  "pet supplies": ["pet supplies", "pet products", "pet accessories", "pet care"],
-  collectibles: ["collectibles", "vintage collectibles", "wrestling figures", "memorabilia", "trading cards", "comics", "sports memorabilia", "collectible toys"],
-  "vintage toys": ["vintage toys", "retro toys", "action figures", "vintage action figures", "collectible toys"],
-  "wrestling collectibles": ["wrestling collectibles", "wrestling memorabilia", "wrestling figures", "wrestling action figures"],
-  "sports memorabilia": ["sports memorabilia", "signed memorabilia", "sports collectibles", "athletic collectibles"],
-  "trading cards": ["trading cards", "sports cards", "collectible cards", "pokemon cards"],
-  comics: ["comics", "comic books", "graphic novels", "collectible comics"],
-  vinyl: ["vinyl", "vinyl records", "records", "music vinyl"],
-  "vintage electronics": ["vintage electronics", "retro electronics", "classic audio", "vintage tech"],
-  "vintage fashion": ["vintage fashion", "vintage clothing", "vintage handbags", "retro fashion"],
-  "vintage furniture": ["vintage furniture", "retro furniture", "antique furniture", "mid century furniture"],
-  jewelry: ["jewelry", "fine jewelry", "gold jewelry", "diamonds", "watches", "necklaces", "pendants", "earrings", "bracelets", "rings", "gold chains", "cuban links"],
-  vintage: ["vintage", "retro", "vintage games", "retro games", "vintage electronics", "vintage toys", "vintage jewelry", "vintage furniture", "vintage fragrance"],
-  studio: ["studio", "studio equipment", "music software", "microphones", "audio interfaces", "studio monitors", "recording equipment"],
-};
+const categoryRegistry = {
+  electronics: {
+    name: "Electronics",
+    slug: "electronics",
+    aliases: ["electronics", "phones", "cell phones", "smartphones", "iphone", "android phones", "computers", "laptops", "desktops", "tablets", "headphones", "headsets", "tv", "television", "camera", "cameras", "gaming", "video games", "consoles", "console", "audio equipment", "home audio"],
+    parent: null,
+    subcategories: ["Phones", "Computers", "Tablets", "Headphones", "TVs", "Cameras", "Gaming"],
+  },
+  fashion: {
+    name: "Fashion",
+    slug: "fashion",
+    aliases: ["fashion", "apparel", "bags", "handbags", "designer handbags", "sneakers", "shirts", "fan apparel", "accessories", "clothing", "streetwear"],
+    parent: null,
+    subcategories: ["Sneakers", "Shirts", "Fan Apparel", "Accessories"],
+  },
+  beauty: {
+    name: "Beauty",
+    slug: "beauty",
+    aliases: ["beauty", "cosmetics", "hair", "wigs", "beauty tools", "luxury beauty", "skincare"],
+    parent: null,
+    subcategories: ["Hair", "Wigs", "Cosmetics", "Beauty Tools"],
+  },
+  fitness: {
+    name: "Fitness",
+    slug: "fitness",
+    aliases: ["fitness", "exercise", "training", "workout", "strength", "wellness", "gym"],
+    parent: null,
+    subcategories: ["Workout", "Strength", "Wellness"],
+  },
+  home: {
+    name: "Home",
+    slug: "home",
+    aliases: ["home", "home and furniture", "home & furniture", "furniture", "home furniture", "living room furniture", "dining room furniture", "home decor", "decor", "lighting", "lamps", "mirrors", "dressers", "tables", "chairs", "beds", "console", "ottoman"],
+    parent: null,
+    subcategories: ["Furniture", "Home Decor", "Lighting"],
+  },
+  studio: {
+    name: "Studio",
+    slug: "studio",
+    aliases: ["studio", "studio equipment", "recording equipment", "microphones", "audio interfaces", "studio monitors", "music software", "recording gear", "production software"],
+    parent: null,
+    subcategories: ["Studio Equipment", "Music Software", "Recording Gear"],
+  },
+  "pet-supplies": {
+    name: "Pet Supplies",
+    slug: "pet-supplies",
+    aliases: ["pet supplies", "pet products", "pet accessories", "pet care"],
+    parent: null,
+    subcategories: ["Pet Care", "Pet Accessories"],
+  },
+  health: {
+    name: "Health",
+    slug: "health",
+    aliases: ["health", "health and wellness", "wellness", "supplements", "vitamins", "wellness bundles"],
+    parent: null,
+    subcategories: ["Wellness", "Supplements", "Vitamins"],
+  },
+  "fine-jewelry": {
+    name: "Fine Jewelry",
+    slug: "fine-jewelry",
+    aliases: ["fine jewelry", "jewelry", "gold jewelry", "diamonds", "diamond jewelry", "watches", "necklaces", "pendants", "earrings", "bracelets", "rings", "gold chains", "cuban links"],
+    parent: null,
+    subcategories: ["Gold Jewelry", "Diamond Jewelry", "Watches", "Rings", "Bracelets"],
+  },
+  "luxury-handbags": {
+    name: "Luxury Handbags",
+    slug: "luxury-handbags",
+    aliases: ["luxury handbags", "designer handbags", "authentic handbags", "premium bags", "leather handbags", "handbags", "bags", "crossbody", "totes", "leather bags"],
+    parent: "fashion",
+    subcategories: ["Handbags", "Crossbody", "Totes"],
+  },
+  fragrance: {
+    name: "Fragrance",
+    slug: "fragrance",
+    aliases: ["fragrance", "perfume", "cologne", "men's cologne", "women's perfume", "unisex fragrance", "luxury fragrance", "designer fragrance", "niche fragrance", "gift sets", "vintage fragrance"],
+    parent: null,
+    subcategories: ["Men's Cologne", "Women's Perfume", "Unisex Fragrance", "Vintage Fragrance"],
+  },
+  "vintage-gaming": {
+    name: "Vintage Gaming",
+    slug: "vintage-gaming",
+    aliases: ["vintage gaming", "retro games", "vintage consoles", "retro consoles", "handhelds", "classic gaming", "retro gaming"],
+    parent: "electronics",
+    subcategories: ["Retro Consoles", "Vintage Games", "Handhelds"],
+  },
+  collectibles: {
+    name: "Collectibles",
+    slug: "collectibles",
+    aliases: ["collectibles", "vintage collectibles", "wrestling figures", "memorabilia", "trading cards", "comics", "sports memorabilia", "collectible toys"],
+    parent: null,
+    subcategories: ["Trading Cards", "Comics", "Sports Memorabilia"],
+  },
+  garden: {
+    name: "Garden",
+    slug: "garden",
+    aliases: ["garden", "gardening", "outdoor", "plants", "seeds", "flowers", "herbs"],
+    parent: null,
+    subcategories: ["Seeds", "Plants", "Outdoor"],
+  },
+} as const;
+
+const categoryAliasMap = new Map<string, string>();
+for (const entry of Object.values(categoryRegistry)) {
+  for (const value of new Set([entry.name, entry.slug, ...entry.aliases])) {
+    const normalized = normalizeKeyword(value);
+    if (normalized) categoryAliasMap.set(normalized, entry.name);
+  }
+}
 
 function normalizeKeyword(value: string | null | undefined): string {
   return String(value ?? "").trim().toLowerCase();
@@ -192,17 +256,49 @@ function expandQueryTerms(rawTerms: string): string[] {
   return Array.from(expanded).map(singularizeToken).filter(Boolean);
 }
 
-function categoryAliasMatches(category: string, query: string): boolean {
-  const normalizedCategory = normalizeKeyword(category);
-  const normalizedQuery = normalizeKeyword(query);
-  if (!normalizedCategory || !normalizedQuery) return false;
+export function canonicalizeCategoryName(value: string | null | undefined): string {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
 
-  const aliases = categoryRegistry[normalizedQuery] ?? [];
-  if (normalizedCategory === normalizedQuery) return true;
-  if (aliases.some((alias) => alias === normalizedCategory)) return true;
+  const candidate = raw.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!candidate) return raw.trim();
 
-  const queryAliasSet = new Set([normalizedQuery, ...aliases]);
-  return Array.from(queryAliasSet).some((alias) => normalizedCategory.includes(alias) || alias.includes(normalizedCategory));
+  const direct = categoryAliasMap.get(candidate);
+  if (direct) return direct;
+
+  const slugValue = raw.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]+/g, "");
+  const entry = Object.values(categoryRegistry).find((item) => item.slug === slugValue || item.name.toLowerCase() === candidate);
+  return entry ? entry.name : raw.trim();
+}
+
+export function normalizeCategoryValue(value: string | null | undefined): string {
+  return canonicalizeCategoryName(value);
+}
+
+export function matchesCategoryFilter(categoryValue: string | null | undefined, filterValue: string | null | undefined): boolean {
+  const category = canonicalizeCategoryName(categoryValue);
+  const filter = canonicalizeCategoryName(filterValue);
+
+  if (!category || !filter) return false;
+  if (category === filter) return true;
+
+  const categoryEntry = Object.values(categoryRegistry).find((entry) => entry.name === category);
+  const filterEntry = Object.values(categoryRegistry).find((entry) => entry.name === filter);
+
+  if (!categoryEntry || !filterEntry) return false;
+  return categoryEntry.name === filterEntry.name || categoryEntry.slug === filterEntry.slug;
+}
+
+export function categoryAliasMatches(category: string, query: string): boolean {
+  const categoryName = canonicalizeCategoryName(category);
+  const queryName = canonicalizeCategoryName(query);
+  if (!categoryName || !queryName) return false;
+
+  const categoryEntry = Object.values(categoryRegistry).find((entry) => entry.name === categoryName);
+  const queryEntry = Object.values(categoryRegistry).find((entry) => entry.name === queryName);
+
+  if (!categoryEntry || !queryEntry) return false;
+  return categoryEntry.name === queryEntry.name || categoryEntry.slug === queryEntry.slug;
 }
 
 export function buildSearchKeywords(product: Partial<SearchableProduct>): string[] {
@@ -348,7 +444,7 @@ export function searchMarketplaceItems<T extends SearchableProduct>(items: T[], 
 
   const filtered = items.filter((item) => {
     if (query && !productMatchesSearch(item, query)) return false;
-    if (category && !(item.category ? categoryAliasMatches(item.category, category) : false)) return false;
+    if (category && !(item.category ? matchesCategoryFilter(item.category, category) : false)) return false;
     if (subcategory && normalizeKeyword(item.subcategory) !== subcategory) return false;
     if (brand && normalizeKeyword(item.brand) !== brand && !item.brand.toLowerCase().includes(brand)) return false;
     if (seller && normalizeKeyword(item.seller) !== seller && !item.seller.toLowerCase().includes(seller)) return false;

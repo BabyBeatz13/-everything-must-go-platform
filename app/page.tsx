@@ -256,9 +256,10 @@ export default function Home() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {featuredCategories.map((category) => (
-            <article
+            <Link
               key={category.title}
-              className={`rounded-[28px] border border-white/10 bg-gradient-to-br ${category.accent} p-5 transition duration-300 hover:-translate-y-1 hover:border-amber-300/50`}
+              href={`/category/${category.title.toLowerCase().replace(/\s+/g, "-")}`}
+              className={`block rounded-[28px] border border-white/10 bg-gradient-to-br ${category.accent} p-5 transition duration-300 hover:-translate-y-1 hover:border-amber-300/50`}
             >
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-semibold text-white">{category.title}</h3>
@@ -267,7 +268,7 @@ export default function Home() {
                 </span>
               </div>
               <p className="mt-4 text-sm text-zinc-300">{category.subtitle}</p>
-            </article>
+            </Link>
           ))}
         </div>
       </section>
@@ -329,12 +330,13 @@ export default function Home() {
           </div>
           <div className="flex flex-wrap gap-2.5">
             {departmentLinks.map((item) => (
-              <span
+              <Link
                 key={item}
+                href={`/category/${item.toLowerCase().replace(/\s+/g, "-")}`}
                 className="rounded-full border border-white/10 bg-black/35 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-amber-300/40 hover:text-amber-100"
               >
                 {item}
-              </span>
+              </Link>
             ))}
           </div>
         </div>
