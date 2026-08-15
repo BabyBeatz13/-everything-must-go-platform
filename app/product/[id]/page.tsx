@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getMarketplaceProductById, getMarketplaceProducts } from "@/lib/marketplace";
 import { MarketplaceProductActions } from "@/components/MarketplaceProductActions";
+import { RecentlyViewedTracker } from "@/components/RecentlyViewedTracker";
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -14,7 +15,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const relatedProducts = (await getMarketplaceProducts({ category: product.category })).filter((item) => item.id !== product.id).slice(0, 4);
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#090909_0%,#111111_35%,#0b0b0b_100%)] text-white">
+    <>
+      <RecentlyViewedTracker product={product} />
+      <main className="min-h-screen bg-[linear-gradient(180deg,#090909_0%,#111111_35%,#0b0b0b_100%)] text-white">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <Link href="/" className="mb-6 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-zinc-200">
           Back to marketplace
@@ -83,5 +86,6 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         </section>
       </div>
     </main>
+    </>
   );
 }
