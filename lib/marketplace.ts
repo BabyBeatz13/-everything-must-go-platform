@@ -405,6 +405,21 @@ export async function getMarketplaceProducts(filters: MarketplaceQueryFilters = 
 }
 
 export async function getMarketplaceProductById(productId: string): Promise<MarketplaceProductCardView | null> {
+  const storefrontMatch = storefrontProducts.find((product) => product.id === productId);
+  if (storefrontMatch) {
+    const normalized = normalizeStorefrontProduct(storefrontMatch);
+    return {
+      ...normalized,
+      image: resolveProductImage({
+        id: normalized.id,
+        title: normalized.title,
+        category: normalized.category,
+        brand: normalized.brand,
+        image: normalized.image,
+      }).primary_image_url,
+    };
+  }
+
   if (!isMarketplaceSupabaseConfigured()) {
     return fallbackProducts.find((product) => product.id === productId) ?? null;
   }
