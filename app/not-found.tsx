@@ -26,6 +26,7 @@ export default function NotFound() {
               { href: "/category/fashion", label: "Fashion" },
               { href: "/category/beauty", label: "Beauty" },
               { href: "/category/home", label: "Home" },
+              { href: "/category/jewelry", label: "Jewelry" },
               { href: "/category/studio", label: "Studio" },
               { href: "/support", label: "Support" },
             ].map((item) => (

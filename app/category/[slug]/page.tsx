@@ -20,7 +20,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
           <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-8 text-center">
             <p className="text-[10px] uppercase tracking-[0.42em] text-amber-200/80">Category</p>
             <h1 className="mt-3 text-3xl font-semibold text-white">{categoryName}</h1>
-            <p className="mt-4 text-zinc-300">No current listings match this category yet. Explore a broader selection or browse our premium collections.</p>
+            <p className="mt-3 text-xl font-semibold text-amber-100">0 {categoryName} listings</p>
+            <p className="mt-4 text-zinc-300">No current listings in this category.</p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Link href="/search" className="rounded-full bg-amber-300 px-5 py-3 text-sm font-bold uppercase tracking-[0.24em] text-black">Search everything</Link>
               <Link href="/" className="rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-bold uppercase tracking-[0.24em] text-white">Return home</Link>

@@ -127,11 +127,18 @@ const categoryRegistry = {
     parent: null,
     subcategories: ["Wellness", "Supplements", "Vitamins"],
   },
+  jewelry: {
+    name: "Jewelry",
+    slug: "jewelry",
+    aliases: ["jewelry", "fine jewelry", "gold jewelry", "diamond jewelry", "diamonds", "watches", "necklaces", "pendants", "earrings", "bracelets", "rings", "gold chains", "cuban links", "cuban chain", "gold chain", "diamond chain"],
+    parent: null,
+    subcategories: ["Fine Jewelry", "Gold Jewelry", "Diamond Jewelry", "Watches", "Necklaces", "Earrings", "Bracelets", "Rings"],
+  },
   "fine-jewelry": {
     name: "Fine Jewelry",
     slug: "fine-jewelry",
-    aliases: ["fine jewelry", "jewelry", "gold jewelry", "diamonds", "diamond jewelry", "watches", "necklaces", "pendants", "earrings", "bracelets", "rings", "gold chains", "cuban links"],
-    parent: null,
+    aliases: ["fine jewelry", "gold jewelry", "diamond jewelry", "diamonds", "watches", "necklaces", "pendants", "earrings", "bracelets", "rings", "gold chains", "cuban links"],
+    parent: "jewelry",
     subcategories: ["Gold Jewelry", "Diamond Jewelry", "Watches", "Rings", "Bracelets"],
   },
   "luxury-handbags": {

@@ -38,6 +38,11 @@ const featuredCategories = [
     accent: "from-orange-300/20 to-yellow-500/15",
   },
   {
+    title: "Jewelry",
+    subtitle: "Fine Jewelry • Gold Chains • Diamond Pieces",
+    accent: "from-amber-200/20 to-yellow-500/15",
+  },
+  {
     title: "Studio",
     subtitle: "Sweetwater • Universal Audio • Microphones",
     accent: "from-sky-300/20 to-cyan-500/15",
@@ -61,6 +66,7 @@ const departmentLinks = [
   "Beauty",
   "Fitness",
   "Home",
+  "Jewelry",
   "Studio",
   "Pet Supplies",
   "Health",
@@ -73,6 +79,7 @@ const allCategories: Array<"All" | ProductCategory> = [
   "Beauty",
   "Fitness",
   "Home",
+  "Jewelry",
   "Studio",
   "Pet Supplies",
   "Health",
@@ -329,15 +336,19 @@ export default function Home() {
             <h2 className="mt-2 text-2xl font-semibold text-white">Full marketplace catalog</h2>
           </div>
           <div className="flex flex-wrap gap-2.5">
-            {departmentLinks.map((item) => (
-              <Link
-                key={item}
-                href={`/category/${item.toLowerCase().replace(/\s+/g, "-")}`}
-                className="rounded-full border border-white/10 bg-black/35 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-amber-300/40 hover:text-amber-100"
-              >
-                {item}
-              </Link>
-            ))}
+            {departmentLinks.map((item) => {
+              const href = item === "Jewelry" ? "/category/jewelry" : `/category/${item.toLowerCase().replace(/\s+/g, "-")}`;
+
+              return (
+                <Link
+                  key={item}
+                  href={href}
+                  className="rounded-full border border-white/10 bg-black/35 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-amber-300/40 hover:text-amber-100"
+                >
+                  {item}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -449,6 +460,7 @@ export default function Home() {
               <li><Link href="/category/studio" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Studio</Link></li>
               <li><Link href="/category/pet-supplies" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Pet Supplies</Link></li>
               <li><Link href="/category/home" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Home</Link></li>
+              <li><Link href="/category/jewelry" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Jewelry</Link></li>
               <li><Link href="/category/health" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Health</Link></li>
             </ul>
           </div>
