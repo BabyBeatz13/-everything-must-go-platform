@@ -159,25 +159,44 @@ async function getSellerNameById(sellerId: string | null) {
   return data?.store_name ?? "Seller store";
 }
 
+function productMatchesSearch(product: Pick<MarketplaceProductCardView, "title" | "description" | "category" | "brand" | "storeName" | "condition">, query: string): boolean {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return true;
+
+  const sourceText = [
+    product.title,
+    product.description,
+    product.category,
+    product.brand,
+    product.storeName,
+    product.condition,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return sourceText.includes(normalizedQuery);
+}
+
 export async function getMarketplaceProducts(filters: MarketplaceQueryFilters = {}): Promise<MarketplaceProductCardView[]> {
+  const trimmedSearch = filters.search?.trim() ?? "";
+
+  const fallbackMatches = fallbackProducts.filter((product) => {
+    if (filters.category && product.category !== filters.category) return false;
+    if (trimmedSearch && !productMatchesSearch(product, trimmedSearch)) return false;
+    if (filters.condition && product.condition !== filters.condition) return false;
+    if (filters.inStock && !product.inStock) return false;
+    if (filters.freeShipping && !product.freeShipping) return false;
+    if (typeof filters.minPrice === "number" && product.price < filters.minPrice) return false;
+    if (typeof filters.maxPrice === "number" && product.price > filters.maxPrice) return false;
+    return true;
+  });
+
   if (!isMarketplaceSupabaseConfigured()) {
-    return fallbackProducts.filter((product) => {
-      if (filters.category && product.category !== filters.category) return false;
-      if (filters.search && !product.title.toLowerCase().includes(filters.search.toLowerCase())) return false;
-      if (filters.condition && product.condition !== filters.condition) return false;
-      if (filters.inStock && !product.inStock) return false;
-      if (filters.freeShipping && !product.freeShipping) return false;
-      if (typeof filters.minPrice === "number" && product.price < filters.minPrice) return false;
-      if (typeof filters.maxPrice === "number" && product.price > filters.maxPrice) return false;
-      return true;
-    });
+    return fallbackMatches;
   }
 
   let query = supabaseMarketplace.from("marketplace_products").select("*").eq("status", "active");
-
-  if (filters.search) {
-    query = query.ilike("title", `%${filters.search}%`);
-  }
 
   if (filters.category) {
     query = query.eq("category", filters.category);
@@ -225,17 +244,26 @@ export async function getMarketplaceProducts(filters: MarketplaceQueryFilters = 
 
   const { data, error } = await query;
   if (error || !data) {
-    return fallbackProducts;
+    return fallbackMatches;
   }
 
-  const products = await Promise.all(
+  const products = (await Promise.all(
     (data as Array<Record<string, any>>).map(async (row: Record<string, any>) => {
       const sellerName = await getSellerNameById(String(row.seller_id ?? ""));
       return normalizeMarketplaceProduct({ ...row, seller_name: sellerName });
     }),
-  );
+  )).filter((product): product is MarketplaceProductCardView => Boolean(product));
 
-  return products.filter((product): product is MarketplaceProductCardView => Boolean(product));
+  return products.filter((product) => {
+    if (filters.category && product.category !== filters.category) return false;
+    if (trimmedSearch && !productMatchesSearch(product, trimmedSearch)) return false;
+    if (filters.condition && product.condition !== filters.condition) return false;
+    if (filters.inStock && !product.inStock) return false;
+    if (filters.freeShipping && !product.freeShipping) return false;
+    if (typeof filters.minPrice === "number" && product.price < filters.minPrice) return false;
+    if (typeof filters.maxPrice === "number" && product.price > filters.maxPrice) return false;
+    return true;
+  });
 }
 
 export async function getMarketplaceProductById(productId: string): Promise<MarketplaceProductCardView | null> {

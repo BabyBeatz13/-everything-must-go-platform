@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ProductCard } from "../components/ProductCard";
 import { MarketplaceProductCard } from "../components/MarketplaceProductCard";
 import { UserMenu } from "../components/account/UserMenu";
@@ -115,10 +116,18 @@ function CartIcon() {
 }
 
 export default function Home() {
+  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<"All" | ProductCategory>("All");
   const [marketplaceSearch, setMarketplaceSearch] = useState("");
   const [liveMarketplaceProducts, setLiveMarketplaceProducts] = useState<any[]>([]);
   const [cartCount, setCartCount] = useState(0);
+
+  const handleMarketplaceSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmedQuery = marketplaceSearch.trim();
+    if (!trimmedQuery) return;
+    router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
+  };
 
   useEffect(() => {
     void (async () => {
@@ -171,15 +180,17 @@ export default function Home() {
           </nav>
 
           <div className="ml-auto flex items-center gap-3">
-            <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-zinc-300 sm:flex">
-              <SearchIcon />
+            <form onSubmit={handleMarketplaceSearch} className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-zinc-300 sm:flex">
+              <button type="submit" aria-label="Search marketplace" className="flex items-center justify-center text-zinc-300 transition hover:text-amber-200">
+                <SearchIcon />
+              </button>
               <input
                 className="w-40 bg-transparent text-sm text-white outline-none placeholder:text-zinc-500"
                 placeholder="Search luxury picks"
                 value={marketplaceSearch}
                 onChange={(event) => setMarketplaceSearch(event.target.value)}
               />
-            </div>
+            </form>
             <UserMenu />
             <Link href="/cart" className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-amber-100 transition hover:border-amber-300/50 hover:bg-amber-300/10">
               <CartIcon />
