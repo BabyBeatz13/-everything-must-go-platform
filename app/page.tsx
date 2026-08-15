@@ -435,28 +435,28 @@ export default function Home() {
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-white">Explore</h3>
             <ul className="mt-3 space-y-2">
-              <li>Electronics</li>
-              <li>Fashion</li>
-              <li>Beauty</li>
-              <li>Fitness</li>
+              <li><Link href="/category/electronics" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Electronics</Link></li>
+              <li><Link href="/category/fashion" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Fashion</Link></li>
+              <li><Link href="/category/beauty" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Beauty</Link></li>
+              <li><Link href="/category/fitness" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Fitness</Link></li>
             </ul>
           </div>
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-white">Collections</h3>
             <ul className="mt-3 space-y-2">
-              <li>Studio</li>
-              <li>Pet Supplies</li>
-              <li>Home</li>
-              <li>Health</li>
+              <li><Link href="/category/studio" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Studio</Link></li>
+              <li><Link href="/category/pet-supplies" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Pet Supplies</Link></li>
+              <li><Link href="/category/home" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Home</Link></li>
+              <li><Link href="/category/health" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Health</Link></li>
             </ul>
           </div>
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-white">Support</h3>
             <ul className="mt-3 space-y-2">
-              <li>Shipping & Returns</li>
-              <li>Contact Concierge</li>
-              <li>Terms of Service</li>
-              <li>Privacy Policy</li>
+              <li><Link href="/legal/shipping" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Shipping &amp; Returns</Link></li>
+              <li><Link href="/support" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Contact Concierge</Link></li>
+              <li><Link href="/legal/terms" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Terms of Service</Link></li>
+              <li><Link href="/legal/privacy" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Privacy Policy</Link></li>
             </ul>
           </div>
         </div>
