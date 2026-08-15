@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { resolveProductImage } from "@/lib/product-images";
 
 type MarketplaceProductCardProps = {
   product: {
@@ -21,12 +22,20 @@ type MarketplaceProductCardProps = {
 };
 
 export function MarketplaceProductCard({ product }: MarketplaceProductCardProps) {
+  const imageMetadata = resolveProductImage({
+    id: product.id,
+    title: product.title,
+    category: product.category,
+    brand: product.brand,
+    image: product.image,
+  });
+
   return (
     <article className="group overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.04] shadow-[0_18px_60px_rgba(0,0,0,0.48)] transition duration-300 hover:-translate-y-1 hover:border-amber-300/40 hover:bg-white/[0.06]">
       <div className="relative overflow-hidden">
         <img
-          src={product.image}
-          alt={product.title}
+          src={imageMetadata.primary_image_url}
+          alt={imageMetadata.image_alt}
           className="h-56 w-full object-cover transition duration-500 group-hover:scale-105"
         />
         <div className="absolute left-3 top-3 rounded-full border border-amber-300/35 bg-black/55 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.28em] text-amber-100">

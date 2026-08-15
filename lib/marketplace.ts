@@ -1,6 +1,7 @@
 import { products as storefrontProducts } from "@/data/products";
 import { getDevelopmentCatalogDocuments } from "@/lib/test-catalog";
 import { buildSearchDocument, searchMarketplaceItems, type SearchableProduct } from "./search";
+import { resolveProductImage } from "./product-images";
 import { supabaseMarketplace, isMarketplaceSupabaseConfigured } from "./supabase-marketplace";
 
 export type MarketplaceProductStatus = "draft" | "active" | "paused" | "archived";
@@ -126,12 +127,18 @@ const fallbackProducts: MarketplaceProductCardView[] = [
 function normalizeMarketplaceProduct(row: Partial<MarketplaceProductRecord> | null | undefined): MarketplaceProductCardView | null {
   if (!row) return null;
 
-  const image = Array.isArray(row.product_images) && row.product_images.length > 0 ? row.product_images[0] : "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=900&q=80";
+  const canonicalImage = resolveProductImage({
+    id: row.id,
+    title: row.title,
+    category: row.category,
+    brand: row.brand,
+    image: Array.isArray(row.product_images) && row.product_images.length > 0 ? row.product_images[0] : undefined,
+  });
 
   return {
     id: String(row.id ?? "unknown"),
     title: row.title ?? "Marketplace product",
-    image,
+    image: canonicalImage.primary_image_url,
     category: row.category ?? "Electronics",
     storeName: row.seller_name ?? "Seller store",
     price: Number(row.price ?? 0),
@@ -172,6 +179,15 @@ function normalizeStorefrontProduct(product: (typeof storefrontProducts)[number]
 }
 
 function storefrontProductToSearchDocument(product: (typeof storefrontProducts)[number]): SearchableProduct {
+  const imageMetadata = resolveProductImage({
+    id: product.id,
+    name: product.name,
+    title: product.name,
+    category: product.category,
+    brand: product.brand,
+    image: product.image,
+  });
+
   return buildSearchDocument({
     id: product.id,
     source: "storefront",
@@ -185,7 +201,7 @@ function storefrontProductToSearchDocument(product: (typeof storefrontProducts)[
     seller: product.merchant,
     seller_slug: null,
     product_url: `/product/${product.id}`,
-    image: product.image,
+    image: imageMetadata.primary_image_url,
     price: product.price,
     condition: "New",
     year: null,
@@ -217,10 +233,19 @@ function dedupeMarketplaceProducts(products: MarketplaceProductCardView[]): Mark
 }
 
 function productDocumentToCard(document: SearchableProduct): MarketplaceProductCardView {
+  const imageMetadata = resolveProductImage({
+    id: document.id,
+    name: document.title,
+    title: document.title,
+    category: document.category,
+    brand: document.brand,
+    image: document.image,
+  });
+
   return {
     id: document.id,
     title: document.title,
-    image: document.image,
+    image: imageMetadata.primary_image_url,
     category: document.category,
     storeName: document.seller,
     price: document.price,

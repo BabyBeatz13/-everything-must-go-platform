@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getMarketplaceProductById, getMarketplaceProducts } from "@/lib/marketplace";
+import { resolveProductImage } from "@/lib/product-images";
 import { MarketplaceProductActions } from "@/components/MarketplaceProductActions";
 import { RecentlyViewedTracker } from "@/components/RecentlyViewedTracker";
 
@@ -13,6 +14,13 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   }
 
   const relatedProducts = (await getMarketplaceProducts({ category: product.category })).filter((item) => item.id !== product.id).slice(0, 4);
+  const imageMetadata = resolveProductImage({
+    id: product.id,
+    title: product.title,
+    category: product.category,
+    brand: product.brand,
+    image: product.image,
+  });
 
   return (
     <>
@@ -25,10 +33,10 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
         <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr]">
           <div className="space-y-4">
-            <img src={product.image} alt={product.title} className="h-[520px] w-full rounded-[28px] border border-white/10 object-cover" />
+            <img src={imageMetadata.primary_image_url} alt={imageMetadata.image_alt} className="h-[520px] w-full rounded-[28px] border border-white/10 object-cover" />
             <div className="grid gap-3 sm:grid-cols-3">
-              {[product.image, product.image, product.image].map((image, index) => (
-                <img key={`${product.id}-${index}`} src={image} alt={`${product.title} detail ${index + 1}`} className="h-28 w-full rounded-[20px] border border-white/10 object-cover" />
+              {imageMetadata.gallery_images.map((image, index) => (
+                <img key={`${product.id}-${index}`} src={image} alt={`${imageMetadata.image_alt} detail ${index + 1}`} className="h-28 w-full rounded-[20px] border border-white/10 object-cover" />
               ))}
             </div>
           </div>

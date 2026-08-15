@@ -58,6 +58,14 @@ export default function AdminCatalogDetailPage() {
                 <input value={record.title} onChange={(event) => updateField("title", event.target.value)} className="field" />
               </label>
               <label className="block">
+                <span className="mb-2 block text-[10px] uppercase tracking-[0.28em] text-zinc-400">Primary image URL</span>
+                <input value={record.primary_image_url ?? record.image ?? ""} onChange={(event) => {
+                  const nextImage = event.target.value || "";
+                  updateField("primary_image_url", nextImage || null);
+                  updateField("image", nextImage || "");
+                }} className="field" />
+              </label>
+              <label className="block">
                 <span className="mb-2 block text-[10px] uppercase tracking-[0.28em] text-zinc-400">Brand</span>
                 <input value={record.brand} onChange={(event) => updateField("brand", event.target.value)} className="field" />
               </label>
@@ -68,6 +76,10 @@ export default function AdminCatalogDetailPage() {
               <label className="block">
                 <span className="mb-2 block text-[10px] uppercase tracking-[0.28em] text-zinc-400">Price</span>
                 <input type="number" step="0.01" value={record.price} onChange={(event) => updateField("price", Number(event.target.value))} className="field" />
+              </label>
+              <label className="block">
+                <span className="mb-2 block text-[10px] uppercase tracking-[0.28em] text-zinc-400">Image verified</span>
+                <input type="checkbox" checked={Boolean(record.image_verified)} onChange={(event) => updateField("image_verified", event.target.checked)} className="mt-4 h-5 w-5 accent-amber-500" />
               </label>
               <label className="block">
                 <span className="mb-2 block text-[10px] uppercase tracking-[0.28em] text-zinc-400">Affiliate URL</span>

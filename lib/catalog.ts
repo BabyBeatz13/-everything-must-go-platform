@@ -56,6 +56,12 @@ export type CatalogRecord = {
   seller_slug?: string | null;
   product_url?: string | null;
   affiliate_url?: string | null;
+  primary_image_url?: string | null;
+  gallery_images?: string[];
+  image_source?: "seller_upload" | "approved_affiliate_source" | "merchant_feed" | "admin_curated" | "development_seed" | "placeholder";
+  image_alt?: string | null;
+  image_verified?: boolean;
+  image_last_checked?: string | null;
   image: string;
   images: string[];
   price: number;
@@ -158,6 +164,9 @@ export function buildCatalogRecord(input: Partial<CatalogRecord>): CatalogRecord
     ),
   );
 
+  const primaryImage = input.primary_image_url ?? input.image ?? "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=900&q=80";
+  const galleryImages = Array.isArray(input.gallery_images) && input.gallery_images.length > 0 ? input.gallery_images : [primaryImage];
+
   return {
     id: input.id ?? `catalog-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     source: input.source ?? "admin_curated",
@@ -174,8 +183,14 @@ export function buildCatalogRecord(input: Partial<CatalogRecord>): CatalogRecord
     seller_slug: input.seller_slug ?? null,
     product_url: input.product_url ?? null,
     affiliate_url: input.affiliate_url ?? null,
-    image: input.image ?? "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=900&q=80",
-    images: Array.isArray(input.images) && input.images.length > 0 ? input.images : [input.image ?? "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=900&q=80"],
+    primary_image_url: primaryImage,
+    gallery_images: galleryImages,
+    image_source: input.image_source ?? (input.source === "seller" ? "seller_upload" : input.source === "affiliate" ? "approved_affiliate_source" : input.source === "merchant_feed" ? "merchant_feed" : "admin_curated"),
+    image_alt: input.image_alt ?? `${title} product image`,
+    image_verified: input.image_verified ?? true,
+    image_last_checked: input.image_last_checked ?? new Date().toISOString(),
+    image: primaryImage,
+    images: galleryImages,
     price: Number(input.price ?? 0),
     compare_at_price: input.compare_at_price ?? null,
     currency: input.currency ?? "USD",
