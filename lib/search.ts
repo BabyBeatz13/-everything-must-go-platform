@@ -30,6 +30,7 @@ export type SearchableProduct = {
   sku?: string | null;
   country_of_origin?: string | null;
   searchText: string;
+  is_test_data?: boolean;
 };
 
 export type SearchOptions = {
@@ -300,6 +301,7 @@ export function buildSearchDocument(product: Partial<SearchableProduct>): Search
     sku: product.sku ?? null,
     country_of_origin: product.country_of_origin ?? null,
     searchText: combinedText,
+    is_test_data: Boolean(product.is_test_data),
   };
 }
 

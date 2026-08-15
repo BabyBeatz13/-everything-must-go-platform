@@ -1,5 +1,12 @@
 import { buildCatalogRecord, catalogRecordToSearchable, type CatalogRecord } from "@/lib/catalog";
 
+export function isDevelopmentCatalogEnabled(): boolean {
+  const rawValue = process.env.NEXT_PUBLIC_SHOW_TEST_CATALOG ?? process.env.SHOW_TEST_CATALOG ?? "false";
+  const enabled = rawValue.toLowerCase() === "true";
+
+  return process.env.NODE_ENV !== "production" && enabled;
+}
+
 export const developmentCatalogSeed: CatalogRecord[] = [
   buildCatalogRecord({
     id: "test-dev-001",
@@ -1336,6 +1343,10 @@ export const developmentCatalogSeed: CatalogRecord[] = [
 ];
 
 export function getDevelopmentCatalogDocuments() {
+  if (!isDevelopmentCatalogEnabled()) {
+    return [];
+  }
+
   return developmentCatalogSeed
     .filter((record) => record.is_test_data && record.active)
     .map((record) => catalogRecordToSearchable(record));

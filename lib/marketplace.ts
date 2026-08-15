@@ -46,6 +46,7 @@ export type MarketplaceProductCardView = {
   sellerId: string | null;
   shippingPrice: number;
   status: MarketplaceProductStatus;
+  is_test_data?: boolean;
 };
 
 export type MarketplaceQueryFilters = {
@@ -234,6 +235,7 @@ function productDocumentToCard(document: SearchableProduct): MarketplaceProductC
     sellerId: document.source_id ?? null,
     shippingPrice: 0,
     status: "active",
+    is_test_data: Boolean(document.is_test_data),
   };
 }
 
@@ -355,7 +357,12 @@ export async function getMarketplaceProducts(filters: MarketplaceQueryFilters = 
     ).values(),
   );
 
-  const filtered = searchMarketplaceItems(mergedDocs, {
+  const productionSafeDocs = mergedDocs.filter((document) => {
+    if (process.env.NODE_ENV !== "production") return true;
+    return !document.is_test_data;
+  });
+
+  const filtered = searchMarketplaceItems(productionSafeDocs, {
     search: trimmedSearch,
     category: filters.category,
     subcategory: filters.subcategory,

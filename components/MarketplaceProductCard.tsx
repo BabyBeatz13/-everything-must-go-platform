@@ -16,6 +16,7 @@ type MarketplaceProductCardProps = {
     description: string;
     inStock: boolean;
     brand: string;
+    is_test_data?: boolean;
   };
 };
 
@@ -31,6 +32,11 @@ export function MarketplaceProductCard({ product }: MarketplaceProductCardProps)
         <div className="absolute left-3 top-3 rounded-full border border-amber-300/35 bg-black/55 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.28em] text-amber-100">
           {product.category}
         </div>
+        {product.is_test_data ? (
+          <div className="absolute right-3 top-3 rounded-full border border-amber-300/40 bg-amber-300/90 px-2 py-1 text-[9px] font-black uppercase tracking-[0.28em] text-black">
+            Dev Test
+          </div>
+        ) : null}
       </div>
 
       <div className="p-4">
