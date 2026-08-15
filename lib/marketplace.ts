@@ -1,4 +1,5 @@
 import { products as storefrontProducts } from "@/data/products";
+import { buildSearchDocument, searchMarketplaceItems, type SearchableProduct } from "./search";
 import { supabaseMarketplace, isMarketplaceSupabaseConfigured } from "./supabase-marketplace";
 
 export type MarketplaceProductStatus = "draft" | "active" | "paused" | "archived";
@@ -168,6 +169,38 @@ function normalizeStorefrontProduct(product: (typeof storefrontProducts)[number]
   };
 }
 
+function storefrontProductToSearchDocument(product: (typeof storefrontProducts)[number]): SearchableProduct {
+  return buildSearchDocument({
+    id: product.id,
+    source: "storefront",
+    source_id: product.id,
+    title: product.name,
+    description: product.description,
+    brand: product.brand,
+    category: product.category,
+    subcategory: "",
+    tags: [product.category, product.brand, product.merchant],
+    seller: product.merchant,
+    seller_slug: null,
+    product_url: `/product/${product.id}`,
+    image: product.image,
+    price: product.price,
+    condition: "New",
+    year: null,
+    release_date: null,
+    created_at: new Date().toISOString(),
+    vintage: false,
+    collectible: false,
+    verified: true,
+    authenticity_status: "not_required",
+    stock_status: product.inStock ? "in_stock" : "out_of_stock",
+    search_keywords: [product.name, product.brand, product.category, product.merchant],
+    manufacturer: product.brand,
+    model: product.name,
+    country_of_origin: null,
+  });
+}
+
 function dedupeMarketplaceProducts(products: MarketplaceProductCardView[]): MarketplaceProductCardView[] {
   const seen = new Map<string, MarketplaceProductCardView>();
 
@@ -179,6 +212,28 @@ function dedupeMarketplaceProducts(products: MarketplaceProductCardView[]): Mark
   }
 
   return Array.from(seen.values());
+}
+
+function productDocumentToCard(document: SearchableProduct): MarketplaceProductCardView {
+  return {
+    id: document.id,
+    title: document.title,
+    image: document.image,
+    category: document.category,
+    storeName: document.seller,
+    price: document.price,
+    condition: document.condition,
+    inventory: document.stock_status === "in_stock" ? 1 : 0,
+    freeShipping: false,
+    featured: document.verified,
+    rating: 4.8,
+    description: document.description,
+    inStock: document.stock_status === "in_stock",
+    brand: document.brand,
+    sellerId: document.source_id ?? null,
+    shippingPrice: 0,
+    status: "active",
+  };
 }
 
 function normalizeSearchText(value: string | null | undefined): string {
@@ -242,90 +297,77 @@ async function getSellerNameById(sellerId: string | null) {
 
 export async function getMarketplaceProducts(filters: MarketplaceQueryFilters = {}): Promise<MarketplaceProductCardView[]> {
   const trimmedSearch = filters.search?.trim() ?? "";
-  const seedProducts = storefrontProducts.map(normalizeStorefrontProduct);
-  const fallbackMatches = dedupeMarketplaceProducts(seedProducts).filter((product) => {
-    if (filters.category && product.category.toLowerCase() !== filters.category.toLowerCase()) return false;
-    if (trimmedSearch && !productMatchesSearch(product, trimmedSearch)) return false;
-    if (filters.condition && product.condition.toLowerCase() !== filters.condition.toLowerCase()) return false;
-    if (filters.inStock && !product.inStock) return false;
-    if (filters.freeShipping && !product.freeShipping) return false;
-    if (typeof filters.minPrice === "number" && product.price < filters.minPrice) return false;
-    if (typeof filters.maxPrice === "number" && product.price > filters.maxPrice) return false;
-    return true;
-  });
+  const storefrontDocs = storefrontProducts.map((product) => storefrontProductToSearchDocument(product));
 
-  if (!isMarketplaceSupabaseConfigured()) {
-    return fallbackMatches;
-  }
+  let sellerDocs: SearchableProduct[] = [];
+  if (isMarketplaceSupabaseConfigured()) {
+    const { data, error } = await supabaseMarketplace
+      .from("marketplace_products")
+      .select("*")
+      .eq("status", "active");
 
-  let query = supabaseMarketplace.from("marketplace_products").select("*").eq("status", "active");
-
-  if (filters.category) {
-    query = query.eq("category", filters.category);
-  }
-
-  if (filters.subcategory) {
-    query = query.eq("subcategory", filters.subcategory);
-  }
-
-  if (filters.brand) {
-    query = query.ilike("brand", `%${filters.brand}%`);
-  }
-
-  if (typeof filters.minPrice === "number") {
-    query = query.gte("price", filters.minPrice);
-  }
-
-  if (typeof filters.maxPrice === "number") {
-    query = query.lte("price", filters.maxPrice);
-  }
-
-  if (filters.condition) {
-    query = query.eq("condition", filters.condition.toLowerCase());
-  }
-
-  if (filters.inStock) {
-    query = query.gt("inventory_quantity", 0);
-  }
-
-  if (filters.freeShipping) {
-    query = query.eq("free_shipping", true);
-  }
-
-  if (filters.seller) {
-    query = query.eq("seller_id", filters.seller);
-  }
-
-  if (filters.sort === "price_asc") {
-    query = query.order("price", { ascending: true });
-  } else if (filters.sort === "price_desc") {
-    query = query.order("price", { ascending: false });
-  } else {
-    query = query.order("created_at", { ascending: false });
-  }
-
-  const { data, error } = await query;
-  const sellerResults = error || !data
-    ? []
-    : (await Promise.all(
-        (data as Array<Record<string, any>>).map(async (row: Record<string, any>) => {
+    if (!error && data) {
+      sellerDocs = await Promise.all(
+        (data as Array<Record<string, any>>).map(async (row) => {
           const sellerName = await getSellerNameById(String(row.seller_id ?? ""));
-          return normalizeMarketplaceProduct({ ...row, seller_name: sellerName });
+          const normalized = normalizeMarketplaceProduct({ ...row, seller_name: sellerName });
+          if (!normalized) return null;
+
+          return buildSearchDocument({
+            id: normalized.id,
+            source: "seller",
+            source_id: normalized.sellerId ?? normalized.id,
+            title: normalized.title,
+            description: normalized.description,
+            brand: normalized.brand,
+            category: normalized.category,
+            subcategory: "",
+            tags: [normalized.category, normalized.brand, normalized.storeName],
+            seller: normalized.storeName,
+            seller_slug: null,
+            product_url: `/product/${normalized.id}`,
+            image: normalized.image,
+            price: normalized.price,
+            condition: normalized.condition,
+            year: null,
+            release_date: null,
+            created_at: new Date().toISOString(),
+            vintage: false,
+            collectible: false,
+            verified: true,
+            authenticity_status: "verified",
+            stock_status: normalized.inStock ? "in_stock" : "out_of_stock",
+            search_keywords: [normalized.title, normalized.brand, normalized.category, normalized.storeName],
+            manufacturer: normalized.brand,
+            model: normalized.title,
+            country_of_origin: null,
+          });
         }),
-      )).filter((product): product is MarketplaceProductCardView => Boolean(product));
+      ).then((items) => items.filter((item): item is SearchableProduct => Boolean(item)));
+    }
+  }
 
-  const merged = dedupeMarketplaceProducts([...seedProducts, ...sellerResults]);
+  const mergedDocs = Array.from(
+    new Map(
+      [...storefrontDocs, ...sellerDocs].map((document) => [`${document.source}:${document.id}`, document]),
+    ).values(),
+  );
 
-  return merged.filter((product) => {
-    if (filters.category && product.category.toLowerCase() !== filters.category.toLowerCase()) return false;
-    if (trimmedSearch && !productMatchesSearch(product, trimmedSearch)) return false;
-    if (filters.condition && product.condition.toLowerCase() !== filters.condition.toLowerCase()) return false;
-    if (filters.inStock && !product.inStock) return false;
-    if (filters.freeShipping && !product.freeShipping) return false;
-    if (typeof filters.minPrice === "number" && product.price < filters.minPrice) return false;
-    if (typeof filters.maxPrice === "number" && product.price > filters.maxPrice) return false;
-    return true;
+  const filtered = searchMarketplaceItems(mergedDocs, {
+    search: trimmedSearch,
+    category: filters.category,
+    subcategory: filters.subcategory,
+    brand: filters.brand,
+    seller: filters.seller,
+    condition: filters.condition,
+    minPrice: filters.minPrice,
+    maxPrice: filters.maxPrice,
+    inStock: filters.inStock,
+    freeShipping: filters.freeShipping,
+    sort: filters.sort ?? "relevance",
   });
+
+  return filtered.map((document) => productDocumentToCard(document));
 }
 
 export async function getMarketplaceProductById(productId: string): Promise<MarketplaceProductCardView | null> {
