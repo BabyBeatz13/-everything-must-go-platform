@@ -28,6 +28,11 @@ const featuredCategories = [
     accent: "from-rose-300/20 to-amber-200/15",
   },
   {
+    title: "Fragrance",
+    subtitle: "Cologne • Perfume • Luxury scents",
+    accent: "from-fuchsia-300/20 to-rose-500/15",
+  },
+  {
     title: "Fitness",
     subtitle: "Gym Equipment • Black Seed Oil",
     accent: "from-emerald-300/20 to-lime-500/15",
@@ -41,6 +46,16 @@ const featuredCategories = [
     title: "Jewelry",
     subtitle: "Fine Jewelry • Gold Chains • Diamond Pieces",
     accent: "from-amber-200/20 to-yellow-500/15",
+  },
+  {
+    title: "Vintage Gaming",
+    subtitle: "Retro consoles • classic titles • collector gear",
+    accent: "from-violet-300/20 to-purple-500/15",
+  },
+  {
+    title: "Collectibles",
+    subtitle: "Trading cards • memorabilia • rare drops",
+    accent: "from-cyan-300/20 to-sky-500/15",
   },
   {
     title: "Studio",
@@ -64,9 +79,12 @@ const departmentLinks = [
   "Electronics",
   "Fashion",
   "Beauty",
+  "Fragrance",
   "Fitness",
   "Home",
   "Jewelry",
+  "Vintage Gaming",
+  "Collectibles",
   "Studio",
   "Pet Supplies",
   "Health",
@@ -77,9 +95,12 @@ const allCategories: Array<"All" | ProductCategory> = [
   "Electronics",
   "Fashion",
   "Beauty",
+  "Fragrance",
   "Fitness",
   "Home",
   "Jewelry",
+  "Vintage Gaming",
+  "Collectibles",
   "Studio",
   "Pet Supplies",
   "Health",
@@ -457,7 +478,10 @@ export default function Home() {
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-white">Collections</h3>
             <ul className="mt-3 space-y-2">
+              <li><Link href="/category/fragrance" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Fragrance</Link></li>
               <li><Link href="/category/studio" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Studio</Link></li>
+              <li><Link href="/category/vintage-gaming" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Vintage Gaming</Link></li>
+              <li><Link href="/category/collectibles" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Collectibles</Link></li>
               <li><Link href="/category/pet-supplies" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Pet Supplies</Link></li>
               <li><Link href="/category/home" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Home</Link></li>
               <li><Link href="/category/jewelry" className="inline-block rounded-md px-1 py-1 text-zinc-400 transition hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60">Jewelry</Link></li>

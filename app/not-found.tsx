@@ -25,8 +25,11 @@ export default function NotFound() {
               { href: "/category/electronics", label: "Electronics" },
               { href: "/category/fashion", label: "Fashion" },
               { href: "/category/beauty", label: "Beauty" },
+              { href: "/category/fragrance", label: "Fragrance" },
               { href: "/category/home", label: "Home" },
               { href: "/category/jewelry", label: "Jewelry" },
+              { href: "/category/vintage-gaming", label: "Vintage Gaming" },
+              { href: "/category/collectibles", label: "Collectibles" },
               { href: "/category/studio", label: "Studio" },
               { href: "/support", label: "Support" },
             ].map((item) => (

@@ -12,11 +12,16 @@ export const canonicalCategoryRoutes: Record<string, string> = {
   "fine jewelry": "/category/jewelry",
   "gold jewelry": "/category/jewelry",
   "diamond jewelry": "/category/jewelry",
-  fragrances: "/category/beauty",
-  cologne: "/category/beauty",
-  perfume: "/category/beauty",
+  fragrance: "/category/fragrance",
+  fragrances: "/category/fragrance",
+  cologne: "/category/fragrance",
+  perfume: "/category/fragrance",
+  "vintage gaming": "/category/vintage-gaming",
+  "retro games": "/category/vintage-gaming",
+  "vintage consoles": "/category/vintage-gaming",
+  collectibles: "/category/collectibles",
+  "vintage collectibles": "/category/collectibles",
   vintage: "/category/fashion",
-  collectibles: "/category/home",
 };
 
 export const internalRouteAudit = [
