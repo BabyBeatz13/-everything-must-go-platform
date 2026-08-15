@@ -278,8 +278,8 @@ function fuzzyMatchToken(token: string, haystack: string): boolean {
   const haystackTokens = buildTokens(haystack);
   for (const candidate of haystackTokens) {
     if (candidate === token) return true;
-    if (candidate.startsWith(token) || token.startsWith(candidate)) return true;
-    if (candidate.length > 3 && token.length > 3 && levenshteinDistance(candidate, token) <= 1) return true;
+    if (candidate.startsWith(token)) return true;
+    if (candidate.length > 3 && token.length > 3 && Math.abs(candidate.length - token.length) <= 1 && levenshteinDistance(candidate, token) <= 1) return true;
   }
 
   return false;
@@ -510,11 +510,19 @@ export function productMatchesSearch(document: SearchableProduct, rawQuery: stri
   const sourceText = document.searchText;
   if (!sourceText) return false;
 
+  const sourceTokens = new Set(buildTokens(sourceText));
+
   if (sourceText.includes(query)) return true;
 
   const matchByTerm = (term: string) => {
     if (!term) return false;
-    if (sourceText.includes(term)) return true;
+    const normalizedTerm = normalizeKeyword(term);
+    const isPhrase = normalizedTerm.includes(" ");
+    if (isPhrase && sourceText.includes(normalizedTerm)) return true;
+
+    const singularTerm = singularizeToken(normalizedTerm);
+    if (!isPhrase && sourceTokens.has(singularTerm)) return true;
+
     if (document.category && categoryAliasMatches(document.category, term)) return true;
     if (document.subcategory && categoryAliasMatches(document.subcategory, term)) return true;
     if (document.brand && fuzzyMatchToken(term, document.brand)) return true;
