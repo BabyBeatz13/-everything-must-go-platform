@@ -1,3 +1,4 @@
+import { products as storefrontProducts } from "@/data/products";
 import { supabaseMarketplace, isMarketplaceSupabaseConfigured } from "./supabase-marketplace";
 
 export type MarketplaceProductStatus = "draft" | "active" | "paused" | "archived";
@@ -145,6 +146,86 @@ function normalizeMarketplaceProduct(row: Partial<MarketplaceProductRecord> | nu
   };
 }
 
+function normalizeStorefrontProduct(product: (typeof storefrontProducts)[number]): MarketplaceProductCardView {
+  return {
+    id: product.id,
+    title: product.name,
+    image: product.image,
+    category: product.category,
+    storeName: product.merchant,
+    price: product.price,
+    condition: "New",
+    inventory: product.inStock ? 1 : 0,
+    freeShipping: false,
+    featured: product.featured,
+    rating: product.rating,
+    description: product.description,
+    inStock: product.inStock,
+    brand: product.brand,
+    sellerId: null,
+    shippingPrice: 0,
+    status: "active",
+  };
+}
+
+function dedupeMarketplaceProducts(products: MarketplaceProductCardView[]): MarketplaceProductCardView[] {
+  const seen = new Map<string, MarketplaceProductCardView>();
+
+  for (const product of products) {
+    const dedupeKey = `${product.title.toLowerCase().trim()}|${product.storeName.toLowerCase().trim()}|${product.category.toLowerCase().trim()}|${product.brand.toLowerCase().trim()}`;
+    if (!seen.has(dedupeKey)) {
+      seen.set(dedupeKey, product);
+    }
+  }
+
+  return Array.from(seen.values());
+}
+
+function normalizeSearchText(value: string | null | undefined): string {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function singularizeToken(token: string) {
+  if (token.length <= 3) return token;
+  if (token.endsWith("ies") && token.length > 4) return `${token.slice(0, -3)}y`;
+  if (token.endsWith("sses")) return token.slice(0, -2);
+  if (token.endsWith("s") && !token.endsWith("ss")) return token.slice(0, -1);
+  return token;
+}
+
+function productMatchesSearch(product: MarketplaceProductCardView, query: string): boolean {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return true;
+
+  const queryTokens = normalizedQuery
+    .split(/\s+/)
+    .map((token) => singularizeToken(token))
+    .filter(Boolean);
+
+  if (queryTokens.length === 0) return true;
+
+  const searchText = [
+    product.title,
+    product.description,
+    product.category,
+    product.brand,
+    product.storeName,
+    product.condition,
+    product.status,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  const singularizedText = searchText
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean)
+    .map((token) => singularizeToken(token))
+    .join(" ");
+
+  return queryTokens.every((token) => singularizedText.includes(token));
+}
+
 async function getSellerNameById(sellerId: string | null) {
   if (!sellerId || !isMarketplaceSupabaseConfigured()) {
     return "Seller store";
@@ -159,32 +240,13 @@ async function getSellerNameById(sellerId: string | null) {
   return data?.store_name ?? "Seller store";
 }
 
-function productMatchesSearch(product: Pick<MarketplaceProductCardView, "title" | "description" | "category" | "brand" | "storeName" | "condition">, query: string): boolean {
-  const normalizedQuery = query.trim().toLowerCase();
-  if (!normalizedQuery) return true;
-
-  const sourceText = [
-    product.title,
-    product.description,
-    product.category,
-    product.brand,
-    product.storeName,
-    product.condition,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-
-  return sourceText.includes(normalizedQuery);
-}
-
 export async function getMarketplaceProducts(filters: MarketplaceQueryFilters = {}): Promise<MarketplaceProductCardView[]> {
   const trimmedSearch = filters.search?.trim() ?? "";
-
-  const fallbackMatches = fallbackProducts.filter((product) => {
-    if (filters.category && product.category !== filters.category) return false;
+  const seedProducts = storefrontProducts.map(normalizeStorefrontProduct);
+  const fallbackMatches = dedupeMarketplaceProducts(seedProducts).filter((product) => {
+    if (filters.category && product.category.toLowerCase() !== filters.category.toLowerCase()) return false;
     if (trimmedSearch && !productMatchesSearch(product, trimmedSearch)) return false;
-    if (filters.condition && product.condition !== filters.condition) return false;
+    if (filters.condition && product.condition.toLowerCase() !== filters.condition.toLowerCase()) return false;
     if (filters.inStock && !product.inStock) return false;
     if (filters.freeShipping && !product.freeShipping) return false;
     if (typeof filters.minPrice === "number" && product.price < filters.minPrice) return false;
@@ -243,21 +305,21 @@ export async function getMarketplaceProducts(filters: MarketplaceQueryFilters = 
   }
 
   const { data, error } = await query;
-  if (error || !data) {
-    return fallbackMatches;
-  }
+  const sellerResults = error || !data
+    ? []
+    : (await Promise.all(
+        (data as Array<Record<string, any>>).map(async (row: Record<string, any>) => {
+          const sellerName = await getSellerNameById(String(row.seller_id ?? ""));
+          return normalizeMarketplaceProduct({ ...row, seller_name: sellerName });
+        }),
+      )).filter((product): product is MarketplaceProductCardView => Boolean(product));
 
-  const products = (await Promise.all(
-    (data as Array<Record<string, any>>).map(async (row: Record<string, any>) => {
-      const sellerName = await getSellerNameById(String(row.seller_id ?? ""));
-      return normalizeMarketplaceProduct({ ...row, seller_name: sellerName });
-    }),
-  )).filter((product): product is MarketplaceProductCardView => Boolean(product));
+  const merged = dedupeMarketplaceProducts([...seedProducts, ...sellerResults]);
 
-  return products.filter((product) => {
-    if (filters.category && product.category !== filters.category) return false;
+  return merged.filter((product) => {
+    if (filters.category && product.category.toLowerCase() !== filters.category.toLowerCase()) return false;
     if (trimmedSearch && !productMatchesSearch(product, trimmedSearch)) return false;
-    if (filters.condition && product.condition !== filters.condition) return false;
+    if (filters.condition && product.condition.toLowerCase() !== filters.condition.toLowerCase()) return false;
     if (filters.inStock && !product.inStock) return false;
     if (filters.freeShipping && !product.freeShipping) return false;
     if (typeof filters.minPrice === "number" && product.price < filters.minPrice) return false;
