@@ -1,4 +1,5 @@
 import { products as storefrontProducts } from "@/data/products";
+import { getDevelopmentCatalogDocuments } from "@/lib/test-catalog";
 import { buildSearchDocument, searchMarketplaceItems, type SearchableProduct } from "./search";
 import { supabaseMarketplace, isMarketplaceSupabaseConfigured } from "./supabase-marketplace";
 
@@ -347,9 +348,10 @@ export async function getMarketplaceProducts(filters: MarketplaceQueryFilters = 
     }
   }
 
+  const developmentDocs = getDevelopmentCatalogDocuments();
   const mergedDocs = Array.from(
     new Map(
-      [...storefrontDocs, ...sellerDocs].map((document) => [`${document.source}:${document.id}`, document]),
+      [...storefrontDocs, ...sellerDocs, ...developmentDocs].map((document) => [`${document.source}:${document.id}`, document]),
     ).values(),
   );
 

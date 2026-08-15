@@ -79,6 +79,7 @@ export type CatalogRecord = {
   fragrance?: CatalogFragranceFields;
   vintage_fields?: CatalogVintageFields;
   status: CatalogRecordStatus;
+  is_test_data?: boolean;
 };
 
 export const catalogSources: CatalogSource[] = ["seller", "affiliate", "admin_curated", "merchant_feed"];
@@ -196,6 +197,7 @@ export function buildCatalogRecord(input: Partial<CatalogRecord>): CatalogRecord
     fragrance: input.fragrance ?? undefined,
     vintage_fields: input.vintage_fields ?? undefined,
     status: input.status ?? (input.active === false ? "inactive" : "active"),
+    is_test_data: input.is_test_data ?? false,
   };
 }
 
