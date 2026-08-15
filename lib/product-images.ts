@@ -33,68 +33,48 @@ const PRODUCT_IMAGE_UNAVAILABLE = `data:image/svg+xml;charset=UTF-8,${encodeURIC
 
 const PRODUCT_IMAGE_LIBRARY: Record<string, ProductImageMetadata> = {
   "airpods max": {
-    primary_image_url: "https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?auto=format&fit=crop&w=1200&q=80",
-    gallery_images: [
-      "https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=1200&q=80",
-    ],
-    image_source: "approved_affiliate_source",
+    primary_image_url: PRODUCT_IMAGE_UNAVAILABLE,
+    gallery_images: [PRODUCT_IMAGE_UNAVAILABLE],
+    image_source: "placeholder",
     image_alt: "Apple AirPods Max over-ear headphones",
     source_product_id: null,
-    image_verified: true,
+    image_verified: false,
     image_last_checked: new Date().toISOString(),
   },
   "iphone 15 pro": {
-    primary_image_url: "https://images.unsplash.com/photo-1671725779286-c6ac0f47d5ab?auto=format&fit=crop&w=1200&q=80",
-    gallery_images: [
-      "https://images.unsplash.com/photo-1671725779286-c6ac0f47d5ab?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&q=80",
-    ],
-    image_source: "approved_affiliate_source",
+    primary_image_url: PRODUCT_IMAGE_UNAVAILABLE,
+    gallery_images: [PRODUCT_IMAGE_UNAVAILABLE],
+    image_source: "placeholder",
     image_alt: "Apple iPhone 15 Pro smartphone",
     source_product_id: null,
-    image_verified: true,
+    image_verified: false,
     image_last_checked: new Date().toISOString(),
   },
   "iphone 16 pro max": {
-    primary_image_url: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=1200&q=80",
-    gallery_images: [
-      "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1671725779286-c6ac0f47d5ab?auto=format&fit=crop&w=1200&q=80",
-    ],
-    image_source: "approved_affiliate_source",
+    primary_image_url: PRODUCT_IMAGE_UNAVAILABLE,
+    gallery_images: [PRODUCT_IMAGE_UNAVAILABLE],
+    image_source: "placeholder",
     image_alt: "Apple iPhone 16 Pro Max smartphone",
     source_product_id: null,
-    image_verified: true,
+    image_verified: false,
     image_last_checked: new Date().toISOString(),
   },
   "macbook air m4": {
-    primary_image_url: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=80",
-    gallery_images: [
-      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1200&q=80",
-    ],
-    image_source: "approved_affiliate_source",
+    primary_image_url: PRODUCT_IMAGE_UNAVAILABLE,
+    gallery_images: [PRODUCT_IMAGE_UNAVAILABLE],
+    image_source: "placeholder",
     image_alt: "Apple MacBook Air M4 laptop",
     source_product_id: null,
-    image_verified: true,
+    image_verified: false,
     image_last_checked: new Date().toISOString(),
   },
   "samsung galaxy s25 ultra": {
-    primary_image_url: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=1200&q=80",
-    gallery_images: [
-      "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=1200&q=80",
-    ],
-    image_source: "approved_affiliate_source",
+    primary_image_url: PRODUCT_IMAGE_UNAVAILABLE,
+    gallery_images: [PRODUCT_IMAGE_UNAVAILABLE],
+    image_source: "placeholder",
     image_alt: "Samsung Galaxy S25 Ultra smartphone",
     source_product_id: null,
-    image_verified: true,
+    image_verified: false,
     image_last_checked: new Date().toISOString(),
   },
   "luxury accent chair": {
@@ -147,6 +127,7 @@ export function resolveProductImage(product: {
   category?: string | null;
   brand?: string | null;
   image?: string | null;
+  imageSource?: ProductImageSource | null;
   primary_image_url?: string | null;
   gallery_images?: string[] | null;
 }): ProductImageMetadata {
@@ -167,7 +148,7 @@ export function resolveProductImage(product: {
     return {
       primary_image_url: primaryImage,
       gallery_images: gallery,
-      image_source: "merchant_feed",
+      image_source: product.imageSource ?? "merchant_feed",
       image_alt: productName ? `${productName}` : `${product.brand ?? product.category ?? "Product"} listing`,
       source_product_id: product.id ? String(product.id) : null,
       image_verified: true,

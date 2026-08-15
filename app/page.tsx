@@ -34,7 +34,7 @@ const featuredCategories = [
   },
   {
     title: "Fitness",
-    subtitle: "Gym Equipment • Black Seed Oil",
+    subtitle: "Strength • Conditioning • Home Training",
     accent: "from-emerald-300/20 to-lime-500/15",
   },
   {
@@ -67,12 +67,13 @@ const featuredCategories = [
 const brands = [
   "Apple",
   "Samsung",
-  "North Face",
   "Pelle Pelle",
+  "Aurelia Fine",
+  "Jo Malone",
+  "Guerlain",
   "Sweetwater",
-  "Universal Audio",
   "Focusrite",
-  "GOAT",
+  "Universal Audio",
 ];
 
 const departmentLinks = [
@@ -104,24 +105,6 @@ const allCategories: Array<"All" | ProductCategory> = [
   "Studio",
   "Pet Supplies",
   "Health",
-];
-
-const testimonials = [
-  {
-    quote:
-      "Luxury-grade shopping experience. Everything Must Go makes premium finds feel effortless.",
-    name: "Mila Carter",
-  },
-  {
-    quote:
-      "The curated collections are unmatched. I found my latest studio setup in one smooth checkout.",
-    name: "Jordan Reed",
-  },
-  {
-    quote:
-      "Elegant, premium, and fast. The site design matches the exclusivity of the products.",
-    name: "Avery Brooks",
-  },
 ];
 
 function SearchIcon() {
@@ -159,11 +142,15 @@ export default function Home() {
 
   useEffect(() => {
     void (async () => {
-      const products = await getMarketplaceProducts({
-        category: selectedCategory === "All" ? undefined : selectedCategory,
-        search: marketplaceSearch || undefined,
-      });
-      setLiveMarketplaceProducts(products);
+      try {
+        const products = await getMarketplaceProducts({
+          category: selectedCategory === "All" ? undefined : selectedCategory,
+          search: marketplaceSearch || undefined,
+        });
+        setLiveMarketplaceProducts(products);
+      } catch {
+        setLiveMarketplaceProducts([]);
+      }
     })();
   }, [selectedCategory, marketplaceSearch]);
 
@@ -183,7 +170,7 @@ export default function Home() {
   const featuredProducts = filteredProducts.filter((product) => product.featured).slice(0, 8);
   const bestSellers = filteredProducts.slice(0, 4);
   const newArrivals = filteredProducts.slice(8, 12);
-  const marketplaceFeatured = liveMarketplaceProducts.filter((product) => product.featured).slice(0, 4);
+  const marketplaceFeatured = liveMarketplaceProducts.filter((product) => product.featured && product.sourceType === "seller").slice(0, 4);
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#090909_0%,#111111_35%,#0b0b0b_100%)] text-white">
@@ -200,11 +187,11 @@ export default function Home() {
           </div>
 
           <nav className="hidden items-center gap-6 text-sm text-zinc-300 lg:flex">
-            <a className="transition hover:text-amber-200" href="#featured">Featured</a>
-            <a className="transition hover:text-amber-200" href="#catalog">Catalog</a>
-            <a className="transition hover:text-amber-200" href="#best">Best Sellers</a>
-            <a className="transition hover:text-amber-200" href="#brands">Brands</a>
-            <a className="transition hover:text-amber-200" href="#reviews">Reviews</a>
+            <Link className="transition hover:text-amber-200" href="/search?q=featured">Featured</Link>
+            <Link className="transition hover:text-amber-200" href="/search">Catalog</Link>
+            <Link className="transition hover:text-amber-200" href="/search?q=best+sellers">Best Sellers</Link>
+            <Link className="transition hover:text-amber-200" href="/search?q=brands">Brands</Link>
+            <Link className="transition hover:text-amber-200" href="/help">Reviews Policy</Link>
           </nav>
 
           <div className="ml-auto flex items-center gap-3">
@@ -245,18 +232,18 @@ export default function Home() {
               Discover luxury affiliate picks across electronics, fashion, beauty, home, fitness, and studio equipment.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <a
-                href="#catalog"
+              <Link
+                href="/search?sort=newest"
                 className="rounded-full bg-amber-300 px-5 py-3 text-sm font-bold uppercase tracking-[0.25em] text-black transition hover:scale-[1.02]"
               >
                 Shop featured
-              </a>
-              <a
-                href="#brands"
+              </Link>
+              <Link
+                href="/search?q=brand"
                 className="rounded-full border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-bold uppercase tracking-[0.25em] text-white transition hover:border-amber-300/50"
               >
                 Explore brands
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -348,6 +335,11 @@ export default function Home() {
             <MarketplaceProductCard key={product.id} product={product} />
           ))}
         </div>
+        {marketplaceFeatured.length === 0 ? (
+          <div className="mt-4 rounded-[20px] border border-white/10 bg-white/[0.03] p-4 text-sm text-zinc-300">
+            Seller spotlight is currently empty. Browse affiliate catalog items in search while seller inventory is being refreshed.
+          </div>
+        ) : null}
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
@@ -444,19 +436,13 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="reviews" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6">
           <p className="text-xs uppercase tracking-[0.4em] text-amber-200/80">Customer Reviews</p>
-          <h2 className="mt-2 text-3xl font-semibold text-white">What premium shoppers are saying</h2>
+          <h2 className="mt-2 text-3xl font-semibold text-white">Verified purchaser reviews coming soon</h2>
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          {testimonials.map((review) => (
-            <article key={review.name} className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5">
-              <div className="mb-4 flex gap-1 text-amber-300">★★★★★</div>
-              <p className="text-base leading-7 text-zinc-200">“{review.quote}”</p>
-              <div className="mt-4 text-sm font-semibold uppercase tracking-[0.26em] text-amber-100">{review.name}</div>
-            </article>
-          ))}
+        <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-6 text-zinc-300">
+          Customer testimonial cards are hidden until verified shopper reviews are available.
         </div>
       </section>
 

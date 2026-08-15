@@ -4,6 +4,7 @@ export type SearchableProduct = {
   id: string;
   source: ProductSource;
   source_id: string | null;
+  source_type?: "seller" | "affiliate" | "admin_curated" | "merchant_feed" | "development_seed";
   title: string;
   description: string;
   brand: string;
@@ -15,6 +16,7 @@ export type SearchableProduct = {
   product_url: string | null;
   image: string;
   price: number;
+  rating?: number;
   condition: string;
   year: number | null;
   release_date: string | null;
@@ -29,6 +31,18 @@ export type SearchableProduct = {
   model?: string | null;
   sku?: string | null;
   country_of_origin?: string | null;
+  image_source?: "seller_upload" | "approved_affiliate_source" | "merchant_feed" | "admin_curated" | "development_seed" | "placeholder";
+  purchase_url?: string | null;
+  year_label?: string | null;
+  metal?: string | null;
+  karat?: string | null;
+  weight?: string | null;
+  chain_length?: string | null;
+  chain_width?: string | null;
+  stone?: string | null;
+  diamond_type?: string | null;
+  carat_weight?: string | null;
+  certification?: string | null;
   searchText: string;
   is_test_data?: boolean;
 };
@@ -53,7 +67,17 @@ export type SearchOptions = {
 const searchSynonyms: Record<string, string[]> = {
   iphone: ["apple phone", "iphone", "smartphone", "cell phone", "phone"],
   "cell phone": ["iphone", "smartphone", "phone"],
-  "cuban link": ["cuban chain", "cuban necklace", "cuban links"],
+  "cuban link": ["cuban chain", "cuban necklace", "cuban links", "miami cuban", "miami cuban link", "gold cuban link", "diamond cuban link", "iced cuban link", "mens cuban link", "womens cuban link"],
+  "cuban links": ["cuban link", "cuban chains", "miami cuban", "gold cuban link", "diamond cuban link"],
+  "cuban chain": ["cuban link", "cuban links", "miami cuban link"],
+  "cuban chains": ["cuban chain", "cuban links", "cuban link"],
+  "miami cuban": ["miami cuban link", "cuban link", "gold cuban link"],
+  "miami cuban link": ["miami cuban", "cuban link", "cuban chain"],
+  "gold cuban link": ["cuban link", "gold chain", "cuban chain"],
+  "diamond cuban link": ["cuban link", "diamond chain", "iced cuban link"],
+  "iced cuban link": ["diamond cuban link", "cuban link", "diamond chain"],
+  "men's cuban link": ["mens cuban link", "cuban link", "mens jewelry"],
+  "women's cuban link": ["womens cuban link", "cuban link", "womens jewelry"],
   perfume: ["fragrance", "cologne", "women's perfume", "men's cologne"],
   cologne: ["fragrance", "perfume", "men's fragrance"],
   purse: ["handbag", "bag"],
@@ -66,8 +90,11 @@ const searchSynonyms: Record<string, string[]> = {
   jewelry: ["fine jewelry", "gold jewelry", "diamond jewelry", "necklaces", "pendants", "rings", "bracelets", "watches"],
   furniture: ["home furniture", "living room furniture", "dining room furniture"],
   "gold chain": ["gold chains", "cuban chain", "gold jewelry"],
+  "diamond chain": ["diamond chains", "iced chain", "diamond cuban link"],
   "diamond earrings": ["diamond earrings", "diamond ear studs", "gemstone earrings"],
   "nintendo": ["nintendo switch", "console", "retro console"],
+  "vintage games": ["retro games", "vintage gaming", "classic games"],
+  microphone: ["mic", "studio mic", "recording microphone"],
 };
 
 const categoryRegistry = {
@@ -130,9 +157,27 @@ const categoryRegistry = {
   jewelry: {
     name: "Jewelry",
     slug: "jewelry",
-    aliases: ["jewelry", "fine jewelry", "gold jewelry", "diamond jewelry", "diamonds", "watches", "necklaces", "pendants", "earrings", "bracelets", "rings", "gold chains", "cuban links", "cuban chain", "gold chain", "diamond chain"],
+    aliases: ["jewelry", "fine jewelry", "gold jewelry", "diamond jewelry", "gemstone jewelry", "diamonds", "watches", "necklaces", "pendants", "earrings", "diamond earrings", "bracelets", "rings", "gold chains", "cuban links", "cuban link", "cuban chain", "miami cuban", "gold chain", "diamond chain", "mens jewelry", "womens jewelry", "women's jewelry", "vintage jewelry"],
     parent: null,
-    subcategories: ["Fine Jewelry", "Gold Jewelry", "Diamond Jewelry", "Watches", "Necklaces", "Earrings", "Bracelets", "Rings"],
+    subcategories: [
+      "Fine Jewelry",
+      "Gold Jewelry",
+      "Cuban Links",
+      "Gold Chains",
+      "Diamond Chains",
+      "Necklaces",
+      "Pendants",
+      "Earrings",
+      "Diamond Earrings",
+      "Bracelets",
+      "Rings",
+      "Watches",
+      "Diamond Jewelry",
+      "Gemstone Jewelry",
+      "Vintage Jewelry",
+      "Men's Jewelry",
+      "Women's Jewelry",
+    ],
   },
   "fine-jewelry": {
     name: "Fine Jewelry",
@@ -247,6 +292,25 @@ function expandQueryTerms(rawTerms: string): string[] {
   const terms = normalized.split(/\s+/).filter(Boolean);
   const expanded = new Set<string>();
 
+  expanded.add(normalized);
+  for (const candidate of searchSynonyms[normalized] ?? []) {
+    expanded.add(candidate);
+    for (const token of buildTokens(candidate)) {
+      expanded.add(token);
+    }
+  }
+
+  for (let index = 0; index < terms.length - 1; index += 1) {
+    const bigram = `${terms[index]} ${terms[index + 1]}`;
+    expanded.add(bigram);
+    for (const candidate of searchSynonyms[bigram] ?? []) {
+      expanded.add(candidate);
+      for (const token of buildTokens(candidate)) {
+        expanded.add(token);
+      }
+    }
+  }
+
   for (const term of terms) {
     expanded.add(term);
     for (const candidate of searchSynonyms[term] ?? []) {
@@ -260,7 +324,9 @@ function expandQueryTerms(rawTerms: string): string[] {
     }
   }
 
-  return Array.from(expanded).map(singularizeToken).filter(Boolean);
+  return Array.from(expanded)
+    .map(singularizeToken)
+    .filter((token) => Boolean(token) && token.length > 2);
 }
 
 export function canonicalizeCategoryName(value: string | null | undefined): string {
@@ -322,6 +388,16 @@ export function buildSearchKeywords(product: Partial<SearchableProduct>): string
     product.sku,
     product.condition,
     product.country_of_origin,
+    product.year_label,
+    product.metal,
+    product.karat,
+    product.weight,
+    product.chain_length,
+    product.chain_width,
+    product.stone,
+    product.diamond_type,
+    product.carat_weight,
+    product.certification,
     product.search_keywords?.join(" "),
   ];
 
@@ -389,6 +465,7 @@ export function buildSearchDocument(product: Partial<SearchableProduct>): Search
     product_url: product.product_url ?? null,
     image: product.image ?? "",
     price: Number(product.price ?? 0),
+    rating: typeof product.rating === "number" ? product.rating : undefined,
     condition: product.condition ?? "New",
     year: typeof product.year === "number" ? product.year : null,
     release_date: product.release_date ?? null,
@@ -403,6 +480,19 @@ export function buildSearchDocument(product: Partial<SearchableProduct>): Search
     model: product.model ?? null,
     sku: product.sku ?? null,
     country_of_origin: product.country_of_origin ?? null,
+    source_type: product.source_type,
+    image_source: product.image_source,
+    purchase_url: product.purchase_url ?? null,
+    year_label: product.year_label ?? null,
+    metal: product.metal ?? null,
+    karat: product.karat ?? null,
+    weight: product.weight ?? null,
+    chain_length: product.chain_length ?? null,
+    chain_width: product.chain_width ?? null,
+    stone: product.stone ?? null,
+    diamond_type: product.diamond_type ?? null,
+    carat_weight: product.carat_weight ?? null,
+    certification: product.certification ?? null,
     searchText: combinedText,
     is_test_data: Boolean(product.is_test_data),
   };
@@ -420,6 +510,8 @@ export function productMatchesSearch(document: SearchableProduct, rawQuery: stri
   const sourceText = document.searchText;
   if (!sourceText) return false;
 
+  if (sourceText.includes(query)) return true;
+
   const matchByTerm = (term: string) => {
     if (!term) return false;
     if (sourceText.includes(term)) return true;
@@ -431,14 +523,25 @@ export function productMatchesSearch(document: SearchableProduct, rawQuery: stri
     return false;
   };
 
-  if (expandedQueryTerms.some((term) => matchByTerm(term))) return true;
-
   const queryTokens = buildTokens(query);
-  if (queryTokens.length > 1) {
-    return queryTokens.some((term) => matchByTerm(term));
+  if (queryTokens.length === 0) {
+    return expandedQueryTerms.some((term) => term.includes(" ") && matchByTerm(term));
   }
 
-  return false;
+  if (queryTokens.length === 1) {
+    const [single] = queryTokens;
+    return matchByTerm(single) || expandedQueryTerms.some((term) => matchByTerm(term));
+  }
+
+  const meaningfulTokens = queryTokens.filter((token) => token.length > 2);
+  const tokenSet = meaningfulTokens.length > 0 ? meaningfulTokens : queryTokens;
+  const matched = tokenSet.filter((token) => matchByTerm(token));
+
+  // Require most tokens for multi-word searches to avoid broad false positives.
+  const minMatches = Math.max(2, tokenSet.length - 1);
+  if (matched.length >= Math.min(minMatches, tokenSet.length)) return true;
+
+  return expandedQueryTerms.some((term) => term.includes(" ") && matchByTerm(term));
 }
 
 export function searchMarketplaceItems<T extends SearchableProduct>(items: T[], options: SearchOptions = {}): T[] {

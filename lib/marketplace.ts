@@ -34,6 +34,7 @@ export type MarketplaceProductCardView = {
   title: string;
   image: string;
   category: string;
+  subcategory?: string;
   storeName: string;
   price: number;
   condition: string;
@@ -47,6 +48,20 @@ export type MarketplaceProductCardView = {
   sellerId: string | null;
   shippingPrice: number;
   status: MarketplaceProductStatus;
+  sourceType?: "seller" | "affiliate" | "admin_curated" | "merchant_feed" | "development_seed";
+  purchaseUrl?: string | null;
+  imageSource?: "seller_upload" | "approved_affiliate_source" | "merchant_feed" | "admin_curated" | "development_seed" | "placeholder";
+  authenticityStatus?: string;
+  year?: number | null;
+  metal?: string;
+  karat?: string;
+  weight?: string;
+  chainLength?: string;
+  chainWidth?: string;
+  stone?: string;
+  diamondType?: string;
+  caratWeight?: string;
+  certification?: string;
   is_test_data?: boolean;
 };
 
@@ -61,7 +76,7 @@ export type MarketplaceQueryFilters = {
   seller?: string;
   inStock?: boolean;
   freeShipping?: boolean;
-  sort?: "newest" | "price_asc" | "price_desc";
+  sort?: "relevance" | "newest" | "price_asc" | "price_desc";
 };
 
 const fallbackProducts: MarketplaceProductCardView[] = [
@@ -140,6 +155,7 @@ function normalizeMarketplaceProduct(row: Partial<MarketplaceProductRecord> | nu
     title: row.title ?? "Marketplace product",
     image: canonicalImage.primary_image_url,
     category: row.category ?? "Electronics",
+    subcategory: row.subcategory ?? undefined,
     storeName: row.seller_name ?? "Seller store",
     price: Number(row.price ?? 0),
     condition: row.condition ? row.condition.charAt(0).toUpperCase() + row.condition.slice(1) : "New",
@@ -153,6 +169,10 @@ function normalizeMarketplaceProduct(row: Partial<MarketplaceProductRecord> | nu
     sellerId: row.seller_id ?? null,
     shippingPrice: Boolean(row.free_shipping) ? 0 : Number(row.shipping_price ?? 0),
     status: (row.status ?? "draft") as MarketplaceProductStatus,
+    sourceType: "seller",
+    purchaseUrl: null,
+    imageSource: canonicalImage.image_source,
+    authenticityStatus: "verified",
   };
 }
 
@@ -160,8 +180,16 @@ function normalizeStorefrontProduct(product: (typeof storefrontProducts)[number]
   return {
     id: product.id,
     title: product.name,
-    image: product.image,
+    image: resolveProductImage({
+      id: product.id,
+      title: product.name,
+      category: product.category,
+      brand: product.brand,
+      image: product.image,
+      imageSource: product.imageSource,
+    }).primary_image_url,
     category: product.category,
+    subcategory: product.subcategory,
     storeName: product.merchant,
     price: product.price,
     condition: "New",
@@ -175,6 +203,20 @@ function normalizeStorefrontProduct(product: (typeof storefrontProducts)[number]
     sellerId: null,
     shippingPrice: 0,
     status: "active",
+    sourceType: product.sourceType ?? "affiliate",
+    purchaseUrl: product.affiliateUrl,
+    imageSource: product.imageSource,
+    authenticityStatus: product.authenticityStatus ?? "not_required",
+    year: product.year ?? null,
+    metal: product.metal,
+    karat: product.karat,
+    weight: product.weight,
+    chainLength: product.chainLength,
+    chainWidth: product.chainWidth,
+    stone: product.stone,
+    diamondType: product.diamondType,
+    caratWeight: product.caratWeight,
+    certification: product.certification,
   };
 }
 
@@ -186,36 +228,67 @@ function storefrontProductToSearchDocument(product: (typeof storefrontProducts)[
     category: product.category,
     brand: product.brand,
     image: product.image,
+    imageSource: product.imageSource,
   });
 
   return buildSearchDocument({
     id: product.id,
-    source: "storefront",
+    source: product.sourceType === "affiliate" ? "affiliate" : product.sourceType === "merchant_feed" ? "imported" : product.sourceType === "seller" ? "seller" : "storefront",
+    source_type: product.sourceType ?? "affiliate",
     source_id: product.id,
     title: product.name,
     description: product.description,
     brand: product.brand,
     category: product.category,
-    subcategory: "",
-    tags: [product.category, product.brand, product.merchant],
+    subcategory: product.subcategory ?? "",
+    tags: [product.category, product.subcategory ?? "", product.brand, product.merchant, ...(product.tags ?? [])],
     seller: product.merchant,
     seller_slug: null,
     product_url: `/product/${product.id}`,
     image: imageMetadata.primary_image_url,
+    image_source: imageMetadata.image_source,
+    purchase_url: product.affiliateUrl,
     price: product.price,
+    rating: product.rating,
     condition: "New",
-    year: null,
+    year: product.year ?? null,
+    year_label: product.year ? String(product.year) : null,
     release_date: null,
     created_at: new Date().toISOString(),
-    vintage: false,
-    collectible: false,
-    verified: true,
-    authenticity_status: "not_required",
+    vintage: product.category === "Vintage Gaming" || product.tags?.includes("vintage") || false,
+    collectible: product.category === "Collectibles" || product.tags?.includes("collectible") || false,
+    verified: product.authenticityStatus === "verified" || product.authenticityStatus === "authentic",
+    authenticity_status: product.authenticityStatus ?? "not_required",
     stock_status: product.inStock ? "in_stock" : "out_of_stock",
-    search_keywords: [product.name, product.brand, product.category, product.merchant],
+    search_keywords: [
+      product.name,
+      product.brand,
+      product.category,
+      product.subcategory ?? "",
+      product.merchant,
+      ...(product.tags ?? []),
+      ...(product.searchKeywords ?? []),
+      product.metal ?? "",
+      product.karat ?? "",
+      product.stone ?? "",
+      product.diamondType ?? "",
+      product.caratWeight ?? "",
+      product.chainLength ?? "",
+      product.chainWidth ?? "",
+      product.certification ?? "",
+    ],
     manufacturer: product.brand,
     model: product.name,
     country_of_origin: null,
+    metal: product.metal,
+    karat: product.karat,
+    weight: product.weight,
+    chain_length: product.chainLength,
+    chain_width: product.chainWidth,
+    stone: product.stone,
+    diamond_type: product.diamondType,
+    carat_weight: product.caratWeight,
+    certification: product.certification,
   });
 }
 
@@ -240,6 +313,7 @@ function productDocumentToCard(document: SearchableProduct): MarketplaceProductC
     category: document.category,
     brand: document.brand,
     image: document.image,
+    imageSource: document.image_source,
   });
 
   return {
@@ -247,19 +321,34 @@ function productDocumentToCard(document: SearchableProduct): MarketplaceProductC
     title: document.title,
     image: imageMetadata.primary_image_url,
     category: document.category,
+    subcategory: document.subcategory || undefined,
     storeName: document.seller,
     price: document.price,
     condition: document.condition,
     inventory: document.stock_status === "in_stock" ? 1 : 0,
     freeShipping: false,
     featured: document.verified,
-    rating: 4.8,
+    rating: typeof document.rating === "number" ? document.rating : 4.8,
     description: document.description,
     inStock: document.stock_status === "in_stock",
     brand: document.brand,
     sellerId: document.source_id ?? null,
     shippingPrice: 0,
     status: "active",
+    sourceType: document.source_type,
+    purchaseUrl: document.purchase_url ?? document.product_url,
+    imageSource: imageMetadata.image_source,
+    authenticityStatus: document.authenticity_status,
+    year: document.year,
+    metal: document.metal ?? undefined,
+    karat: document.karat ?? undefined,
+    weight: document.weight ?? undefined,
+    chainLength: document.chain_length ?? undefined,
+    chainWidth: document.chain_width ?? undefined,
+    stone: document.stone ?? undefined,
+    diamondType: document.diamond_type ?? undefined,
+    caratWeight: document.carat_weight ?? undefined,
+    certification: document.certification ?? undefined,
     is_test_data: Boolean(document.is_test_data),
   };
 }
@@ -326,59 +415,105 @@ async function getSellerNameById(sellerId: string | null) {
 export async function getMarketplaceProducts(filters: MarketplaceQueryFilters = {}): Promise<MarketplaceProductCardView[]> {
   const trimmedSearch = filters.search?.trim() ?? "";
   const storefrontDocs = storefrontProducts.map((product) => storefrontProductToSearchDocument(product));
+  const canQuerySupabase = isMarketplaceSupabaseConfigured() && typeof window === "undefined";
+  let supabaseUnavailable = false;
 
   let sellerDocs: SearchableProduct[] = [];
-  if (isMarketplaceSupabaseConfigured()) {
-    const { data, error } = await supabaseMarketplace
-      .from("marketplace_products")
-      .select("*")
-      .eq("status", "active");
+  if (canQuerySupabase) {
+    try {
+      const { data, error } = await supabaseMarketplace
+        .from("marketplace_products")
+        .select("*")
+        .eq("status", "active");
 
-    if (!error && data) {
-      sellerDocs = await Promise.all(
-        (data as Array<Record<string, any>>).map(async (row) => {
-          const sellerName = await getSellerNameById(String(row.seller_id ?? ""));
-          const normalized = normalizeMarketplaceProduct({ ...row, seller_name: sellerName });
-          if (!normalized) return null;
+      if (!error && data) {
+        sellerDocs = await Promise.all(
+          (data as Array<Record<string, any>>).map(async (row) => {
+            const sellerName = await getSellerNameById(String(row.seller_id ?? ""));
+            const normalized = normalizeMarketplaceProduct({ ...row, seller_name: sellerName });
+            if (!normalized) return null;
 
-          return buildSearchDocument({
-            id: normalized.id,
-            source: "seller",
-            source_id: normalized.sellerId ?? normalized.id,
-            title: normalized.title,
-            description: normalized.description,
-            brand: normalized.brand,
-            category: normalized.category,
-            subcategory: "",
-            tags: [normalized.category, normalized.brand, normalized.storeName],
-            seller: normalized.storeName,
-            seller_slug: null,
-            product_url: `/product/${normalized.id}`,
-            image: normalized.image,
-            price: normalized.price,
-            condition: normalized.condition,
-            year: null,
-            release_date: null,
-            created_at: new Date().toISOString(),
-            vintage: false,
-            collectible: false,
-            verified: true,
-            authenticity_status: "verified",
-            stock_status: normalized.inStock ? "in_stock" : "out_of_stock",
-            search_keywords: [normalized.title, normalized.brand, normalized.category, normalized.storeName],
-            manufacturer: normalized.brand,
-            model: normalized.title,
-            country_of_origin: null,
-          });
-        }),
-      ).then((items) => items.filter((item): item is SearchableProduct => Boolean(item)));
+            return buildSearchDocument({
+              id: normalized.id,
+              source: "seller",
+              source_id: normalized.sellerId ?? normalized.id,
+              title: normalized.title,
+              description: normalized.description,
+              brand: normalized.brand,
+              category: normalized.category,
+              subcategory: normalized.subcategory ?? "",
+              tags: [normalized.category, normalized.subcategory ?? "", normalized.brand, normalized.storeName],
+              seller: normalized.storeName,
+              seller_slug: null,
+              product_url: `/product/${normalized.id}`,
+              image: normalized.image,
+              price: normalized.price,
+              rating: normalized.rating,
+              condition: normalized.condition,
+              year: normalized.year ?? null,
+              release_date: null,
+              created_at: new Date().toISOString(),
+              vintage: false,
+              collectible: false,
+              verified: true,
+              authenticity_status: "verified",
+              stock_status: normalized.inStock ? "in_stock" : "out_of_stock",
+              search_keywords: [normalized.title, normalized.brand, normalized.category, normalized.subcategory ?? "", normalized.storeName],
+              manufacturer: normalized.brand,
+              model: normalized.title,
+              country_of_origin: null,
+            });
+          }),
+        ).then((items) => items.filter((item): item is SearchableProduct => Boolean(item)));
+      }
+    } catch {
+      sellerDocs = [];
+      supabaseUnavailable = true;
     }
   }
+
+  const fallbackSellerDocs = !canQuerySupabase || supabaseUnavailable
+    ? fallbackProducts.map((product) =>
+        buildSearchDocument({
+          id: product.id,
+          source: "seller",
+          source_type: "seller",
+          source_id: product.sellerId,
+          title: product.title,
+          description: product.description,
+          brand: product.brand,
+          category: product.category,
+          subcategory: product.subcategory ?? "",
+          tags: [product.category, product.brand, product.storeName],
+          seller: product.storeName,
+          seller_slug: null,
+          product_url: `/product/${product.id}`,
+          image: product.image,
+          price: product.price,
+          rating: product.rating,
+          condition: product.condition,
+          year: null,
+          release_date: null,
+          created_at: new Date().toISOString(),
+          vintage: product.condition.toLowerCase() === "vintage",
+          collectible: product.category.toLowerCase().includes("collectible"),
+          verified: true,
+          authenticity_status: "verified",
+          stock_status: product.inStock ? "in_stock" : "out_of_stock",
+          search_keywords: [product.title, product.brand, product.category, product.storeName],
+          manufacturer: product.brand,
+          model: product.title,
+          country_of_origin: null,
+          image_source: "seller_upload",
+          purchase_url: null,
+        }),
+      )
+    : [];
 
   const developmentDocs = getDevelopmentCatalogDocuments();
   const mergedDocs = Array.from(
     new Map(
-      [...storefrontDocs, ...sellerDocs, ...developmentDocs].map((document) => [`${document.source}:${document.id}`, document]),
+      [...storefrontDocs, ...sellerDocs, ...fallbackSellerDocs, ...developmentDocs].map((document) => [`${document.source}:${document.id}`, document]),
     ).values(),
   );
 
@@ -416,6 +551,7 @@ export async function getMarketplaceProductById(productId: string): Promise<Mark
         category: normalized.category,
         brand: normalized.brand,
         image: normalized.image,
+        imageSource: normalized.imageSource,
       }).primary_image_url,
     };
   }
@@ -432,7 +568,7 @@ export async function getMarketplaceProductById(productId: string): Promise<Mark
     .maybeSingle();
 
   if (error || !data) {
-    return null;
+    return fallbackProducts.find((product) => product.id === productId) ?? null;
   }
 
   const sellerName = await getSellerNameById(data.seller_id);

@@ -13,6 +13,7 @@ export function ProductCard({ product }: ProductCardProps) {
     category: product.category,
     brand: product.brand,
     image: product.image,
+    imageSource: product.imageSource,
   });
 
   return (

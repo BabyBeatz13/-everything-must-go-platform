@@ -7,6 +7,7 @@ type MarketplaceProductCardProps = {
     title: string;
     image: string;
     category: string;
+    subcategory?: string;
     storeName: string;
     price: number;
     condition: string;
@@ -17,6 +18,8 @@ type MarketplaceProductCardProps = {
     description: string;
     inStock: boolean;
     brand: string;
+    imageSource?: "seller_upload" | "approved_affiliate_source" | "merchant_feed" | "admin_curated" | "development_seed" | "placeholder";
+    sourceType?: "seller" | "affiliate" | "admin_curated" | "merchant_feed" | "development_seed";
     is_test_data?: boolean;
   };
 };
@@ -28,7 +31,10 @@ export function MarketplaceProductCard({ product }: MarketplaceProductCardProps)
     category: product.category,
     brand: product.brand,
     image: product.image,
+    imageSource: product.imageSource,
   });
+
+  const isImagePlaceholder = imageMetadata.image_source === "placeholder";
 
   return (
     <article className="group overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.04] shadow-[0_18px_60px_rgba(0,0,0,0.48)] transition duration-300 hover:-translate-y-1 hover:border-amber-300/40 hover:bg-white/[0.06]">
@@ -41,6 +47,11 @@ export function MarketplaceProductCard({ product }: MarketplaceProductCardProps)
         <div className="absolute left-3 top-3 rounded-full border border-amber-300/35 bg-black/55 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.28em] text-amber-100">
           {product.category}
         </div>
+        {product.subcategory ? (
+          <div className="absolute bottom-3 left-3 rounded-full border border-white/25 bg-black/60 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.24em] text-zinc-100">
+            {product.subcategory}
+          </div>
+        ) : null}
         {product.is_test_data ? (
           <div className="absolute right-3 top-3 rounded-full border border-amber-300/40 bg-amber-300/90 px-2 py-1 text-[9px] font-black uppercase tracking-[0.28em] text-black">
             Dev Test
@@ -74,7 +85,7 @@ export function MarketplaceProductCard({ product }: MarketplaceProductCardProps)
             {product.inStock ? "In Stock" : "Out of Stock"}
           </span>
           <span className="text-[10px] uppercase tracking-[0.26em] text-zinc-400">
-            {product.featured ? "Featured" : "Curated"}
+            {isImagePlaceholder ? "Image Unavailable" : product.featured ? "Featured" : "Curated"}
           </span>
         </div>
 
