@@ -86,7 +86,6 @@ const searchSynonyms: Record<string, string[]> = {
   "game system": ["console", "video game console"],
   retro: ["vintage"],
   "wrestling toy": ["wrestling figure", "action figure"],
-  earrings: ["ear rings"],
   jewelry: ["fine jewelry", "gold jewelry", "diamond jewelry", "necklaces", "pendants", "rings", "bracelets", "watches"],
   furniture: ["home furniture", "living room furniture", "dining room furniture"],
   "gold chain": ["gold chains", "cuban chain", "gold jewelry"],
@@ -538,7 +537,7 @@ export function productMatchesSearch(document: SearchableProduct, rawQuery: stri
 
   if (queryTokens.length === 1) {
     const [single] = queryTokens;
-    return matchByTerm(single) || expandedQueryTerms.some((term) => matchByTerm(term));
+    return matchByTerm(single) || expandedQueryTerms.some((term) => term.includes(" ") && matchByTerm(term));
   }
 
   const meaningfulTokens = queryTokens.filter((token) => token.length > 2);
