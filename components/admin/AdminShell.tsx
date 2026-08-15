@@ -9,6 +9,8 @@ const navItems = [
   { href: "/admin/sellers", label: "Sellers" },
   { href: "/admin/listings", label: "Products/Listings" },
   { href: "/admin/orders", label: "Orders" },
+  { href: "/admin/shipping", label: "Shipping" },
+  { href: "/admin/shipments", label: "Shipments" },
   { href: "/admin/payments", label: "Payments" },
   { href: "/admin/payouts", label: "Payouts" },
   { href: "/admin/refunds", label: "Refunds" },

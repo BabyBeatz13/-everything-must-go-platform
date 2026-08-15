@@ -15,6 +15,7 @@ const sellerNav = [
   { href: "/seller/dashboard", label: "Dashboard" },
   { href: "/seller/products", label: "Products" },
   { href: "/seller/orders", label: "Orders" },
+  { href: "/seller/shipping", label: "Shipping" },
   { href: "/seller/cases", label: "Cases" },
   { href: "/seller/customers", label: "Customers" },
   { href: "/seller/analytics", label: "Analytics" },
