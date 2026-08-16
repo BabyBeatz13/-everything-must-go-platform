@@ -1,5 +1,5 @@
 import { products as storefrontProducts } from "@/data/products";
-import { getDevelopmentCatalogDocuments } from "@/lib/test-catalog";
+import { getDevelopmentCatalogDocuments, isDevelopmentCatalogEnabled } from "@/lib/test-catalog";
 import { buildSearchDocument, searchMarketplaceItems, type SearchableProduct } from "./search";
 import { resolveProductImage } from "./product-images";
 import { supabaseMarketplace, isMarketplaceSupabaseConfigured } from "./supabase-marketplace";
@@ -22,6 +22,16 @@ export type MarketplaceProductRecord = {
   shipping_price: number;
   free_shipping: boolean;
   product_images: string[] | null;
+  image_gallery?: unknown;
+  image_primary_index?: number | null;
+  primary_image_url?: string | null;
+  model?: string | null;
+  year_era?: string | null;
+  tags?: string[] | null;
+  availability?: string | null;
+  source_type?: "seller" | "affiliate" | "admin_curated" | "merchant_feed" | "development_seed" | null;
+  external_product_id?: string | null;
+  source_updated_at?: string | null;
   featured: boolean;
   status: MarketplaceProductStatus;
   created_at: string;
@@ -49,9 +59,18 @@ export type MarketplaceProductCardView = {
   shippingPrice: number;
   status: MarketplaceProductStatus;
   sourceType?: "seller" | "affiliate" | "admin_curated" | "merchant_feed" | "development_seed";
+  sourceRecordType?: "real_seller" | "approved_external" | "hardcoded" | "demo" | "fallback";
   purchaseUrl?: string | null;
+  externalProductId?: string | null;
+  sourceUpdatedAt?: string | null;
+  listingCreatedAt?: string;
   imageSource?: "seller_upload" | "approved_affiliate_source" | "merchant_feed" | "admin_curated" | "development_seed" | "placeholder";
+  imageGallery?: string[];
   authenticityStatus?: string;
+  availability?: string;
+  model?: string;
+  yearEra?: string;
+  tags?: string[];
   year?: number | null;
   metal?: string;
   karat?: string;
@@ -76,78 +95,82 @@ export type MarketplaceQueryFilters = {
   seller?: string;
   inStock?: boolean;
   freeShipping?: boolean;
-  sort?: "relevance" | "newest" | "price_asc" | "price_desc";
+  sort?: "relevance" | "newest" | "oldest" | "price_asc" | "price_desc";
 };
 
-const fallbackProducts: MarketplaceProductCardView[] = [
-  {
-    id: "seller-product-1",
-    title: "Brass Floor Lamp",
-    image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80",
-    category: "Home & Furniture",
-    storeName: "Velvet & Vine",
-    price: 289,
-    condition: "New",
-    inventory: 10,
-    freeShipping: false,
-    featured: true,
-    rating: 4.9,
-    description: "Warm ambient lamp with premium brass finish and linen shade.",
-    inStock: true,
-    brand: "Velvet & Vine",
-    sellerId: "demo-seller-1",
-    shippingPrice: 18,
-    status: "active",
-  },
-  {
-    id: "seller-product-2",
-    title: "Vintage Mirror Set",
-    image: "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=900&q=80",
-    category: "Home Decor",
-    storeName: "Velvet & Vine",
-    price: 420,
-    condition: "Vintage",
-    inventory: 5,
-    freeShipping: true,
-    featured: false,
-    rating: 4.8,
-    description: "Hand-finished vintage mirror pair for gallery-style interiors.",
-    inStock: true,
-    brand: "Velvet & Vine",
-    sellerId: "demo-seller-1",
-    shippingPrice: 0,
-    status: "active",
-  },
-  {
-    id: "seller-product-3",
-    title: "Collectible Wrestling Figure",
-    image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80",
-    category: "Wrestling Figures",
-    storeName: "Collector Vault",
-    price: 180,
-    condition: "Collectible",
-    inventory: 3,
-    freeShipping: true,
-    featured: true,
-    rating: 4.7,
-    description: "Premium display piece with limited edition finish.",
-    inStock: true,
-    brand: "Collector Vault",
-    sellerId: "demo-seller-2",
-    shippingPrice: 0,
-    status: "active",
-  },
-];
+const FALLBACK_PRODUCT_IDS = new Set(["seller-product-1", "seller-product-2", "seller-product-3"]);
+
+function isFallbackProductId(id: string | null | undefined) {
+  if (!id) return false;
+  return FALLBACK_PRODUCT_IDS.has(String(id));
+}
+
+function parseGalleryImages(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map((entry) => String(entry || "").trim()).filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) return parsed.map((entry) => String(entry || "").trim()).filter(Boolean);
+      return [];
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
+}
+
+function storefrontCreatedAtFromId(id: string): string {
+  const match = id.match(/(\d+)$/);
+  const index = match ? Number(match[1]) : 0;
+  const day = Number.isFinite(index) && index > 0 ? index : 1;
+  const date = new Date(Date.UTC(2026, 0, Math.min(day, 28)));
+  return date.toISOString();
+}
+
+function shouldIncludeInCustomerInventory(document: SearchableProduct, includeNonProductionInventory: boolean) {
+  if (isFallbackProductId(document.id)) return false;
+  if (document.is_test_data) return false;
+
+  const sourceType = String(document.source_type ?? "").toLowerCase();
+  if (!includeNonProductionInventory && (sourceType === "development_seed" || sourceType === "admin_curated")) {
+    return false;
+  }
+
+  return true;
+}
 
 function normalizeMarketplaceProduct(row: Partial<MarketplaceProductRecord> | null | undefined): MarketplaceProductCardView | null {
   if (!row) return null;
+
+  if (isFallbackProductId(String(row.id ?? ""))) {
+    return null;
+  }
+
+  const galleryFromImages = Array.isArray(row.product_images) ? row.product_images.filter(Boolean) : [];
+  const galleryFromJson = parseGalleryImages(row.image_gallery);
+  const mergedGallery = (galleryFromJson.length > 0 ? galleryFromJson : galleryFromImages)
+    .map((entry) => String(entry || "").trim())
+    .filter(Boolean);
+  const primaryIndex = Math.max(0, Number(row.image_primary_index ?? 0));
+  const primaryFromGallery = mergedGallery[primaryIndex] || mergedGallery[0] || "";
+  const primaryImage = String(row.primary_image_url ?? "").trim() || primaryFromGallery;
+  const productTags = Array.isArray(row.tags) ? row.tags.map((entry) => String(entry || "").trim()).filter(Boolean) : [];
 
   const canonicalImage = resolveProductImage({
     id: row.id,
     title: row.title,
     category: row.category,
     brand: row.brand,
-    image: Array.isArray(row.product_images) && row.product_images.length > 0 ? row.product_images[0] : undefined,
+    image: primaryImage || undefined,
+    primary_image_url: primaryImage || undefined,
+    gallery_images: mergedGallery,
+    imageSource: "seller_upload",
   });
 
   return {
@@ -162,7 +185,7 @@ function normalizeMarketplaceProduct(row: Partial<MarketplaceProductRecord> | nu
     inventory: Number(row.inventory_quantity ?? 0),
     freeShipping: Boolean(row.free_shipping),
     featured: Boolean(row.featured),
-    rating: 4.8,
+    rating: 0,
     description: row.description ?? "Curated seller listing from the marketplace.",
     inStock: Number(row.inventory_quantity ?? 0) > 0,
     brand: row.brand ?? "Seller brand",
@@ -170,24 +193,35 @@ function normalizeMarketplaceProduct(row: Partial<MarketplaceProductRecord> | nu
     shippingPrice: Boolean(row.free_shipping) ? 0 : Number(row.shipping_price ?? 0),
     status: (row.status ?? "draft") as MarketplaceProductStatus,
     sourceType: "seller",
+    sourceRecordType: "real_seller",
     purchaseUrl: null,
+    externalProductId: row.external_product_id ?? null,
+    sourceUpdatedAt: row.source_updated_at ?? row.updated_at ?? null,
+    listingCreatedAt: row.created_at,
     imageSource: canonicalImage.image_source,
+    imageGallery: canonicalImage.gallery_images,
     authenticityStatus: "verified",
+    availability: row.availability ?? (Number(row.inventory_quantity ?? 0) > 0 ? "in_stock" : "out_of_stock"),
+    model: row.model ?? undefined,
+    yearEra: row.year_era ?? undefined,
+    tags: productTags,
   };
 }
 
 function normalizeStorefrontProduct(product: (typeof storefrontProducts)[number]): MarketplaceProductCardView {
+  const imageMetadata = resolveProductImage({
+    id: product.id,
+    title: product.name,
+    category: product.category,
+    brand: product.brand,
+    image: product.image,
+    imageSource: product.imageSource,
+  });
+
   return {
     id: product.id,
     title: product.name,
-    image: resolveProductImage({
-      id: product.id,
-      title: product.name,
-      category: product.category,
-      brand: product.brand,
-      image: product.image,
-      imageSource: product.imageSource,
-    }).primary_image_url,
+    image: imageMetadata.primary_image_url,
     category: product.category,
     subcategory: product.subcategory,
     storeName: product.merchant,
@@ -196,7 +230,7 @@ function normalizeStorefrontProduct(product: (typeof storefrontProducts)[number]
     inventory: product.inStock ? 1 : 0,
     freeShipping: false,
     featured: product.featured,
-    rating: product.rating,
+    rating: 0,
     description: product.description,
     inStock: product.inStock,
     brand: product.brand,
@@ -204,9 +238,18 @@ function normalizeStorefrontProduct(product: (typeof storefrontProducts)[number]
     shippingPrice: 0,
     status: "active",
     sourceType: product.sourceType ?? "affiliate",
+    sourceRecordType: product.sourceType === "affiliate" ? "approved_external" : "hardcoded",
     purchaseUrl: product.affiliateUrl,
+    externalProductId: product.externalProductId ?? product.id,
+    sourceUpdatedAt: product.sourceUpdatedAt ?? storefrontCreatedAtFromId(product.id),
+    listingCreatedAt: product.listingCreatedAt ?? storefrontCreatedAtFromId(product.id),
     imageSource: product.imageSource,
+    imageGallery: imageMetadata.gallery_images,
     authenticityStatus: product.authenticityStatus ?? "not_required",
+    availability: product.inStock ? "in_stock" : "out_of_stock",
+    model: product.model,
+    yearEra: product.yearEra,
+    tags: product.tags ?? [],
     year: product.year ?? null,
     metal: product.metal,
     karat: product.karat,
@@ -254,7 +297,7 @@ function storefrontProductToSearchDocument(product: (typeof storefrontProducts)[
     year: product.year ?? null,
     year_label: product.year ? String(product.year) : null,
     release_date: null,
-    created_at: new Date().toISOString(),
+    created_at: product.listingCreatedAt ?? storefrontCreatedAtFromId(product.id),
     vintage: product.category === "Vintage Gaming" || product.tags?.includes("vintage") || false,
     collectible: product.category === "Collectibles" || product.tags?.includes("collectible") || false,
     verified: product.authenticityStatus === "verified" || product.authenticityStatus === "authentic",
@@ -278,7 +321,7 @@ function storefrontProductToSearchDocument(product: (typeof storefrontProducts)[
       product.certification ?? "",
     ],
     manufacturer: product.brand,
-    model: product.name,
+    model: product.model ?? product.name,
     country_of_origin: null,
     metal: product.metal,
     karat: product.karat,
@@ -289,6 +332,7 @@ function storefrontProductToSearchDocument(product: (typeof storefrontProducts)[
     diamond_type: product.diamondType,
     carat_weight: product.caratWeight,
     certification: product.certification,
+    is_test_data: Boolean(product.isTestData),
   });
 }
 
@@ -328,7 +372,7 @@ function productDocumentToCard(document: SearchableProduct): MarketplaceProductC
     inventory: document.stock_status === "in_stock" ? 1 : 0,
     freeShipping: false,
     featured: document.verified,
-    rating: typeof document.rating === "number" ? document.rating : 4.8,
+    rating: typeof document.rating === "number" ? document.rating : 0,
     description: document.description,
     inStock: document.stock_status === "in_stock",
     brand: document.brand,
@@ -336,9 +380,24 @@ function productDocumentToCard(document: SearchableProduct): MarketplaceProductC
     shippingPrice: 0,
     status: "active",
     sourceType: document.source_type,
+    sourceRecordType: document.source_type === "seller"
+      ? "real_seller"
+      : document.is_test_data
+        ? "demo"
+        : document.source_type === "affiliate" || document.source_type === "merchant_feed"
+          ? "approved_external"
+          : "hardcoded",
     purchaseUrl: document.purchase_url ?? document.product_url,
+    externalProductId: document.source_id,
+    sourceUpdatedAt: null,
+    listingCreatedAt: document.created_at,
     imageSource: imageMetadata.image_source,
+    imageGallery: imageMetadata.gallery_images,
     authenticityStatus: document.authenticity_status,
+    availability: document.stock_status,
+    model: document.model ?? undefined,
+    yearEra: document.year_label ?? undefined,
+    tags: document.tags,
     year: document.year,
     metal: document.metal ?? undefined,
     karat: document.karat ?? undefined,
@@ -416,7 +475,7 @@ export async function getMarketplaceProducts(filters: MarketplaceQueryFilters = 
   const trimmedSearch = filters.search?.trim() ?? "";
   const storefrontDocs = storefrontProducts.map((product) => storefrontProductToSearchDocument(product));
   const canQuerySupabase = isMarketplaceSupabaseConfigured() && typeof window === "undefined";
-  let supabaseUnavailable = false;
+  const includeNonProductionInventory = isDevelopmentCatalogEnabled();
 
   let sellerDocs: SearchableProduct[] = [];
   if (canQuerySupabase) {
@@ -436,31 +495,35 @@ export async function getMarketplaceProducts(filters: MarketplaceQueryFilters = 
             return buildSearchDocument({
               id: normalized.id,
               source: "seller",
+              source_type: "seller",
               source_id: normalized.sellerId ?? normalized.id,
               title: normalized.title,
               description: normalized.description,
               brand: normalized.brand,
               category: normalized.category,
               subcategory: normalized.subcategory ?? "",
-              tags: [normalized.category, normalized.subcategory ?? "", normalized.brand, normalized.storeName],
+              tags: [normalized.category, normalized.subcategory ?? "", normalized.brand, normalized.storeName, ...(normalized.tags ?? [])],
               seller: normalized.storeName,
               seller_slug: null,
               product_url: `/product/${normalized.id}`,
               image: normalized.image,
+              image_source: normalized.imageSource,
+              purchase_url: normalized.purchaseUrl ?? null,
               price: normalized.price,
               rating: normalized.rating,
               condition: normalized.condition,
               year: normalized.year ?? null,
               release_date: null,
-              created_at: new Date().toISOString(),
-              vintage: false,
-              collectible: false,
+              created_at: normalized.listingCreatedAt ?? new Date().toISOString(),
+              vintage: normalized.condition.toLowerCase() === "vintage" || Boolean(normalized.tags?.some((tag) => String(tag).toLowerCase().includes("vintage"))),
+              collectible: normalized.condition.toLowerCase() === "collectible" || normalized.category.toLowerCase().includes("collectible"),
               verified: true,
               authenticity_status: "verified",
               stock_status: normalized.inStock ? "in_stock" : "out_of_stock",
-              search_keywords: [normalized.title, normalized.brand, normalized.category, normalized.subcategory ?? "", normalized.storeName],
+              search_keywords: [normalized.title, normalized.brand, normalized.category, normalized.subcategory ?? "", normalized.storeName, normalized.model ?? "", normalized.yearEra ?? "", ...(normalized.tags ?? [])],
               manufacturer: normalized.brand,
-              model: normalized.title,
+              model: normalized.model ?? normalized.title,
+              year_label: normalized.yearEra ?? null,
               country_of_origin: null,
             });
           }),
@@ -468,61 +531,19 @@ export async function getMarketplaceProducts(filters: MarketplaceQueryFilters = 
       }
     } catch {
       sellerDocs = [];
-      supabaseUnavailable = true;
     }
   }
 
-  const fallbackSellerDocs = !canQuerySupabase || supabaseUnavailable
-    ? fallbackProducts.map((product) =>
-        buildSearchDocument({
-          id: product.id,
-          source: "seller",
-          source_type: "seller",
-          source_id: product.sellerId,
-          title: product.title,
-          description: product.description,
-          brand: product.brand,
-          category: product.category,
-          subcategory: product.subcategory ?? "",
-          tags: [product.category, product.brand, product.storeName],
-          seller: product.storeName,
-          seller_slug: null,
-          product_url: `/product/${product.id}`,
-          image: product.image,
-          price: product.price,
-          rating: product.rating,
-          condition: product.condition,
-          year: null,
-          release_date: null,
-          created_at: new Date().toISOString(),
-          vintage: product.condition.toLowerCase() === "vintage",
-          collectible: product.category.toLowerCase().includes("collectible"),
-          verified: true,
-          authenticity_status: "verified",
-          stock_status: product.inStock ? "in_stock" : "out_of_stock",
-          search_keywords: [product.title, product.brand, product.category, product.storeName],
-          manufacturer: product.brand,
-          model: product.title,
-          country_of_origin: null,
-          image_source: "seller_upload",
-          purchase_url: null,
-        }),
-      )
-    : [];
-
-  const developmentDocs = getDevelopmentCatalogDocuments();
+  const developmentDocs = includeNonProductionInventory ? getDevelopmentCatalogDocuments() : [];
   const mergedDocs = Array.from(
     new Map(
-      [...storefrontDocs, ...sellerDocs, ...fallbackSellerDocs, ...developmentDocs].map((document) => [`${document.source}:${document.id}`, document]),
+      [...storefrontDocs, ...sellerDocs, ...developmentDocs].map((document) => [`${document.source}:${document.id}`, document]),
     ).values(),
   );
 
-  const productionSafeDocs = mergedDocs.filter((document) => {
-    if (process.env.NODE_ENV !== "production") return true;
-    return !document.is_test_data;
-  });
+  const customerSafeDocs = mergedDocs.filter((document) => shouldIncludeInCustomerInventory(document, includeNonProductionInventory));
 
-  const filtered = searchMarketplaceItems(productionSafeDocs, {
+  const filtered = searchMarketplaceItems(customerSafeDocs, {
     search: trimmedSearch,
     category: filters.category,
     subcategory: filters.subcategory,
@@ -540,6 +561,10 @@ export async function getMarketplaceProducts(filters: MarketplaceQueryFilters = 
 }
 
 export async function getMarketplaceProductById(productId: string): Promise<MarketplaceProductCardView | null> {
+  if (isFallbackProductId(productId)) {
+    return null;
+  }
+
   const storefrontMatch = storefrontProducts.find((product) => product.id === productId);
   if (storefrontMatch) {
     const normalized = normalizeStorefrontProduct(storefrontMatch);
@@ -557,23 +582,7 @@ export async function getMarketplaceProductById(productId: string): Promise<Mark
   }
 
   if (!isMarketplaceSupabaseConfigured()) {
-    const fallbackMatch = fallbackProducts.find((product) => product.id === productId);
-    if (!fallbackMatch) return null;
-
-    const imageMetadata = resolveProductImage({
-      id: fallbackMatch.id,
-      title: fallbackMatch.title,
-      category: fallbackMatch.category,
-      brand: fallbackMatch.brand,
-      image: fallbackMatch.image,
-      imageSource: fallbackMatch.imageSource,
-    });
-
-    return {
-      ...fallbackMatch,
-      image: imageMetadata.primary_image_url,
-      imageSource: imageMetadata.image_source,
-    };
+    return null;
   }
 
   const { data, error } = await supabaseMarketplace
@@ -583,56 +592,18 @@ export async function getMarketplaceProductById(productId: string): Promise<Mark
     .eq("status", "active")
     .maybeSingle();
 
-  if (error || !data) {
-    const fallbackMatch = fallbackProducts.find((product) => product.id === productId);
-    if (!fallbackMatch) return null;
-
-    const imageMetadata = resolveProductImage({
-      id: fallbackMatch.id,
-      title: fallbackMatch.title,
-      category: fallbackMatch.category,
-      brand: fallbackMatch.brand,
-      image: fallbackMatch.image,
-      imageSource: fallbackMatch.imageSource,
-    });
-
-    return {
-      ...fallbackMatch,
-      image: imageMetadata.primary_image_url,
-      imageSource: imageMetadata.image_source,
-    };
-  }
+  if (error || !data) return null;
 
   const sellerName = await getSellerNameById(data.seller_id);
-  return normalizeMarketplaceProduct({ ...data, seller_name: sellerName });
+  const normalized = normalizeMarketplaceProduct({ ...data, seller_name: sellerName });
+  if (!normalized) return null;
+  if (normalized.is_test_data) return null;
+  return normalized;
 }
 
 export async function getSellerProducts(sellerId: string): Promise<MarketplaceProductRecord[]> {
   if (!isMarketplaceSupabaseConfigured()) {
-    return [
-      {
-        id: "seller-product-1",
-        seller_id: sellerId,
-        title: "Brass Floor Lamp",
-        description: "Warm ambient lamp with premium brass finish and linen shade.",
-        category: "Home & Furniture",
-        subcategory: "Lamps",
-        brand: "Velvet & Vine",
-        price: 289,
-        compare_at_price: 349,
-        inventory_quantity: 10,
-        sku: "VVM-LAMP-001",
-        condition: "new",
-        shipping_price: 18,
-        free_shipping: false,
-        product_images: ["https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80"],
-        featured: true,
-        status: "active",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        seller_name: "Velvet & Vine",
-      },
-    ];
+    return [];
   }
 
   const { data, error } = await supabaseMarketplace

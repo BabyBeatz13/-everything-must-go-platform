@@ -9,6 +9,7 @@ export type SellerProductForm = {
   category: string;
   subcategory: string;
   brand: string;
+  model: string;
   sku: string;
   status: "draft" | "active" | "paused" | "archived";
   price: number;
@@ -21,6 +22,10 @@ export type SellerProductForm = {
   slug: string;
   variantsJson: string;
   imagesCsv: string;
+  imagePrimaryIndex: number;
+  tagsCsv: string;
+  yearEra: string;
+  availability: "in_stock" | "low_stock" | "out_of_stock" | "unknown";
   shippingClass: string;
   weightGrams: number;
   seoTitle: string;
@@ -169,6 +174,9 @@ export async function createSellerProductPortal(form: SellerProductForm) {
     return { ok: false, error: "Seller profile not found." };
   }
 
+  const imageGallery = form.imagesCsv.split(",").map((item) => item.trim()).filter(Boolean);
+  const clampedPrimaryIndex = Math.max(0, Math.min(form.imagePrimaryIndex || 0, Math.max(0, imageGallery.length - 1)));
+
   const payload: Record<string, unknown> = {
     seller_id: identity.sellerId,
     title: form.title,
@@ -176,6 +184,7 @@ export async function createSellerProductPortal(form: SellerProductForm) {
     category: form.category,
     subcategory: form.subcategory || null,
     brand: form.brand || null,
+    model: form.model || null,
     price: form.price,
     compare_at_price: form.compareAtPrice || null,
     inventory_quantity: form.inventoryQuantity,
@@ -185,10 +194,16 @@ export async function createSellerProductPortal(form: SellerProductForm) {
     free_shipping: form.freeShipping,
     featured: form.featured,
     status: form.status,
-    product_images: form.imagesCsv.split(",").map((item) => item.trim()).filter(Boolean),
+    product_images: imageGallery,
     slug: form.slug || toSlug(form.title),
     variants: safeParseJson(form.variantsJson, []),
-    image_gallery: form.imagesCsv.split(",").map((item) => item.trim()).filter(Boolean),
+    image_gallery: imageGallery,
+    image_primary_index: clampedPrimaryIndex,
+    primary_image_url: imageGallery[clampedPrimaryIndex] ?? null,
+    tags: form.tagsCsv.split(",").map((item) => item.trim()).filter(Boolean),
+    year_era: form.yearEra || null,
+    availability: form.availability,
+    source_type: "seller",
     shipping_class: form.shippingClass || null,
     weight_grams: form.weightGrams || null,
     seo_title: form.seoTitle || null,
@@ -205,12 +220,16 @@ export async function createSellerProductPortal(form: SellerProductForm) {
 }
 
 export async function updateSellerProductPortal(productId: string, form: SellerProductForm) {
+  const imageGallery = form.imagesCsv.split(",").map((item) => item.trim()).filter(Boolean);
+  const clampedPrimaryIndex = Math.max(0, Math.min(form.imagePrimaryIndex || 0, Math.max(0, imageGallery.length - 1)));
+
   const payload: Record<string, unknown> = {
     title: form.title,
     description: form.description,
     category: form.category,
     subcategory: form.subcategory || null,
     brand: form.brand || null,
+    model: form.model || null,
     price: form.price,
     compare_at_price: form.compareAtPrice || null,
     inventory_quantity: form.inventoryQuantity,
@@ -220,10 +239,16 @@ export async function updateSellerProductPortal(productId: string, form: SellerP
     free_shipping: form.freeShipping,
     featured: form.featured,
     status: form.status,
-    product_images: form.imagesCsv.split(",").map((item) => item.trim()).filter(Boolean),
+    product_images: imageGallery,
     slug: form.slug || toSlug(form.title),
     variants: safeParseJson(form.variantsJson, []),
-    image_gallery: form.imagesCsv.split(",").map((item) => item.trim()).filter(Boolean),
+    image_gallery: imageGallery,
+    image_primary_index: clampedPrimaryIndex,
+    primary_image_url: imageGallery[clampedPrimaryIndex] ?? null,
+    tags: form.tagsCsv.split(",").map((item) => item.trim()).filter(Boolean),
+    year_era: form.yearEra || null,
+    availability: form.availability,
+    source_type: "seller",
     shipping_class: form.shippingClass || null,
     weight_grams: form.weightGrams || null,
     seo_title: form.seoTitle || null,

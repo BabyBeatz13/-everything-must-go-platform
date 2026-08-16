@@ -1,49 +1,4 @@
-export type ProductCategory =
-  | "Electronics"
-  | "Phones"
-  | "Computers"
-  | "Gaming"
-  | "Fashion"
-  | "Sneakers"
-  | "Fan Apparel"
-  | "Beauty"
-  | "Fragrance"
-  | "Fitness"
-  | "Health"
-  | "Health & Wellness"
-  | "Home"
-  | "Jewelry"
-  | "Vintage Gaming"
-  | "Collectibles"
-  | "Fine Jewelry"
-  | "Gold Jewelry"
-  | "Diamond Jewelry"
-  | "Home & Furniture"
-  | "Home Decor"
-  | "Dressers"
-  | "Mirrors"
-  | "Lamps"
-  | "Vases"
-  | "Garden"
-  | "Fruit Seeds"
-  | "Vegetable Seeds"
-  | "Herb Seeds"
-  | "Flower Seeds"
-  | "Studio"
-  | "Studio Equipment"
-  | "Music Software"
-  | "Collectibles"
-  | "Vintage Toys"
-  | "Wrestling Figures"
-  | "Wrestling Memorabilia"
-  | "Sports Cards"
-  | "Trading Cards"
-  | "Funko Pops"
-  | "Hot Wheels"
-  | "LEGO"
-  | "Comics"
-  | "Retro Gaming"
-  | "Pet Supplies";
+export type ProductCategory = string;
 
 export type Product = {
   id: string;
@@ -59,6 +14,13 @@ export type Product = {
   rating: number;
   affiliateUrl: string;
   sourceType?: "seller" | "affiliate" | "admin_curated" | "merchant_feed" | "development_seed";
+  externalProductId?: string;
+  sourceUpdatedAt?: string;
+  listingCreatedAt?: string;
+  model?: string;
+  yearEra?: string;
+  availability?: "in_stock" | "low_stock" | "out_of_stock" | "unknown";
+  isTestData?: boolean;
   authenticityStatus?: "verified" | "authentic" | "pending_review" | "not_required" | "test_only";
   tags?: string[];
   searchKeywords?: string[];

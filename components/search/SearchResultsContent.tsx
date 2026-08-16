@@ -9,6 +9,10 @@ import { getMarketplaceProducts, type MarketplaceProductCardView } from "@/lib/m
 export default function SearchResultsContent() {
   const params = useSearchParams();
   const rawQuery = params.get("q") ?? "";
+  const rawSort = params.get("sort") ?? "relevance";
+  const rawCategory = params.get("category") ?? "";
+  const rawBrand = params.get("brand") ?? "";
+  const rawCondition = params.get("condition") ?? "";
   const [products, setProducts] = useState<MarketplaceProductCardView[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -16,14 +20,51 @@ export default function SearchResultsContent() {
     void (async () => {
       setLoading(true);
       try {
-        const results = await getMarketplaceProducts({ search: rawQuery || undefined });
+        const results = await getMarketplaceProducts({
+          search: rawQuery || undefined,
+          sort: rawSort as "relevance" | "newest" | "oldest" | "price_asc" | "price_desc",
+          category: rawCategory || undefined,
+          brand: rawBrand || undefined,
+          condition: rawCondition || undefined,
+        });
         setProducts(results);
       } catch {
         setProducts([]);
       }
       setLoading(false);
     })();
-  }, [rawQuery]);
+  }, [rawQuery, rawSort, rawCategory, rawBrand, rawCondition]);
+
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    for (const product of products) {
+      if (product.category) set.add(product.category);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [products]);
+
+  const brands = useMemo(() => {
+    const set = new Set<string>();
+    for (const product of products) {
+      if (product.brand) set.add(product.brand);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [products]);
+
+  const conditions = useMemo(() => {
+    const set = new Set<string>();
+    for (const product of products) {
+      if (product.condition) set.add(product.condition);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [products]);
+
+  const buildFilterHref = (key: "sort" | "category" | "brand" | "condition", value: string) => {
+    const next = new URLSearchParams(params.toString());
+    if (value) next.set(key, value);
+    else next.delete(key);
+    return `/search?${next.toString()}`;
+  };
 
   const summary = useMemo(() => {
     if (!rawQuery) return "Browse all premium finds";
@@ -60,6 +101,41 @@ export default function SearchResultsContent() {
           <Link href="/" className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-zinc-200">
             Back to home
           </Link>
+        </div>
+
+        <div className="mb-6 grid gap-3 md:grid-cols-4">
+          <Link href={buildFilterHref("sort", "relevance")} className={`rounded-2xl border px-3 py-2 text-sm ${rawSort === "relevance" ? "border-amber-300/50 bg-amber-300/10 text-amber-100" : "border-white/10 bg-white/[0.03] text-zinc-200"}`}>Most Relevant</Link>
+          <Link href={buildFilterHref("sort", "newest")} className={`rounded-2xl border px-3 py-2 text-sm ${rawSort === "newest" ? "border-amber-300/50 bg-amber-300/10 text-amber-100" : "border-white/10 bg-white/[0.03] text-zinc-200"}`}>Newest</Link>
+          <Link href={buildFilterHref("sort", "oldest")} className={`rounded-2xl border px-3 py-2 text-sm ${rawSort === "oldest" ? "border-amber-300/50 bg-amber-300/10 text-amber-100" : "border-white/10 bg-white/[0.03] text-zinc-200"}`}>Oldest</Link>
+          <Link href={buildFilterHref("sort", "price_asc")} className={`rounded-2xl border px-3 py-2 text-sm ${rawSort === "price_asc" ? "border-amber-300/50 bg-amber-300/10 text-amber-100" : "border-white/10 bg-white/[0.03] text-zinc-200"}`}>Price Low to High</Link>
+          <Link href={buildFilterHref("sort", "price_desc")} className={`rounded-2xl border px-3 py-2 text-sm ${rawSort === "price_desc" ? "border-amber-300/50 bg-amber-300/10 text-amber-100" : "border-white/10 bg-white/[0.03] text-zinc-200"}`}>Price High to Low</Link>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2">
+            <p className="mb-1 text-[10px] uppercase tracking-[0.24em] text-zinc-400">Category</p>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <Link href={buildFilterHref("category", "")} className={rawCategory ? "text-zinc-300" : "text-amber-200"}>All</Link>
+              {categories.slice(0, 8).map((category) => (
+                <Link key={category} href={buildFilterHref("category", category)} className={rawCategory === category ? "text-amber-200" : "text-zinc-300"}>{category}</Link>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2">
+            <p className="mb-1 text-[10px] uppercase tracking-[0.24em] text-zinc-400">Brand</p>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <Link href={buildFilterHref("brand", "")} className={rawBrand ? "text-zinc-300" : "text-amber-200"}>All</Link>
+              {brands.slice(0, 8).map((brand) => (
+                <Link key={brand} href={buildFilterHref("brand", brand)} className={rawBrand === brand ? "text-amber-200" : "text-zinc-300"}>{brand}</Link>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2">
+            <p className="mb-1 text-[10px] uppercase tracking-[0.24em] text-zinc-400">Condition</p>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <Link href={buildFilterHref("condition", "")} className={rawCondition ? "text-zinc-300" : "text-amber-200"}>All</Link>
+              {conditions.slice(0, 8).map((condition) => (
+                <Link key={condition} href={buildFilterHref("condition", condition)} className={rawCondition === condition ? "text-amber-200" : "text-zinc-300"}>{condition}</Link>
+              ))}
+            </div>
+          </div>
         </div>
 
         {loading ? (

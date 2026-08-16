@@ -65,8 +65,8 @@ export function MarketplaceProductCard({ product }: MarketplaceProductCardProps)
             <p className="text-[10px] uppercase tracking-[0.28em] text-amber-200/75">{product.storeName}</p>
             <h3 className="mt-2 text-lg font-semibold text-white">{product.title}</h3>
           </div>
-          <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.26em] text-amber-100">
-            {product.rating.toFixed(1)}★
+          <span className="rounded-full border border-white/20 bg-black/35 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.26em] text-zinc-200">
+            {product.condition}
           </span>
         </div>
 

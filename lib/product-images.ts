@@ -435,6 +435,28 @@ export function resolveProductImage(product: {
   const productName = (product.name ?? product.title ?? "").trim();
   const imageKey = normalizeProductKey(productName);
 
+  // Seller-uploaded listing photos are authoritative and must never be replaced
+  // by title-based image mappings from other products.
+  if (product.imageSource === "seller_upload") {
+    const primaryImage = (product.primary_image_url || product.image || "").trim();
+    const gallery = Array.isArray(product.gallery_images)
+      ? product.gallery_images.map((item) => String(item || "").trim()).filter(Boolean)
+      : [];
+
+    if (primaryImage) {
+      const normalizedGallery = gallery.length > 0 ? gallery : [primaryImage];
+      return {
+        primary_image_url: primaryImage,
+        gallery_images: normalizedGallery,
+        image_source: "seller_upload",
+        image_alt: productName ? `${productName}` : `${product.brand ?? product.category ?? "Product"} listing`,
+        source_product_id: product.id ? String(product.id) : null,
+        image_verified: true,
+        image_last_checked: new Date().toISOString(),
+      };
+    }
+  }
+
   if (imageKey && PRODUCT_IMAGE_LIBRARY[imageKey]) {
     return {
       ...PRODUCT_IMAGE_LIBRARY[imageKey],

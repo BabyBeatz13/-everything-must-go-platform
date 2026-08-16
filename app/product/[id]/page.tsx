@@ -4,6 +4,7 @@ import { getMarketplaceProductById, getMarketplaceProducts } from "@/lib/marketp
 import { resolveProductImage } from "@/lib/product-images";
 import { MarketplaceProductActions } from "@/components/MarketplaceProductActions";
 import { RecentlyViewedTracker } from "@/components/RecentlyViewedTracker";
+import { ProductImageGallery } from "@/components/product/ProductImageGallery";
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -20,8 +21,10 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     category: product.category,
     brand: product.brand,
     image: product.image,
+    gallery_images: product.imageGallery,
     imageSource: product.imageSource,
   });
+  const galleryImages = imageMetadata.gallery_images.length > 0 ? imageMetadata.gallery_images : [imageMetadata.primary_image_url];
   const isAffiliateItem = product.sourceType === "affiliate" && Boolean(product.purchaseUrl);
 
   return (
@@ -34,14 +37,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         </Link>
 
         <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr]">
-          <div className="space-y-4">
-            <img src={imageMetadata.primary_image_url} alt={imageMetadata.image_alt} className="h-[520px] w-full rounded-[28px] border border-white/10 object-cover" />
-            <div className="grid gap-3 sm:grid-cols-3">
-              {imageMetadata.gallery_images.map((image, index) => (
-                <img key={`${product.id}-${index}`} src={image} alt={`${imageMetadata.image_alt} detail ${index + 1}`} className="h-28 w-full rounded-[20px] border border-white/10 object-cover" />
-              ))}
-            </div>
-          </div>
+          <ProductImageGallery images={galleryImages} alt={imageMetadata.image_alt} />
 
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
             <p className="text-[10px] uppercase tracking-[0.42em] text-amber-200/80">{product.category}</p>

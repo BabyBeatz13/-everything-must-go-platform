@@ -59,6 +59,9 @@ export function ProductEditorForm({
       <FormField label="Brand">
         <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" value={value.brand} onChange={(e) => update("brand", e.target.value)} />
       </FormField>
+      <FormField label="Model">
+        <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" value={value.model} onChange={(e) => update("model", e.target.value)} placeholder="Model or variant" />
+      </FormField>
       <FormField label="SKU">
         <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" value={value.sku} onChange={(e) => update("sku", e.target.value)} required />
       </FormField>
@@ -77,6 +80,20 @@ export function ProductEditorForm({
             <option key={condition} value={condition.toLowerCase()}>{condition}</option>
           ))}
         </select>
+      </FormField>
+      <FormField label="Availability">
+        <select className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" value={value.availability} onChange={(e) => update("availability", e.target.value as SellerProductForm["availability"])}>
+          <option value="in_stock">In stock</option>
+          <option value="low_stock">Low stock</option>
+          <option value="out_of_stock">Out of stock</option>
+          <option value="unknown">Unknown</option>
+        </select>
+      </FormField>
+      <FormField label="Year / Era">
+        <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" value={value.yearEra} onChange={(e) => update("yearEra", e.target.value)} placeholder="e.g. 1990s, 2026, Fall 2025" />
+      </FormField>
+      <FormField label="Tags (comma-separated)">
+        <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" value={value.tagsCsv} onChange={(e) => update("tagsCsv", e.target.value)} placeholder="cuban link, mens jewelry, vintage" />
       </FormField>
       <FormField label="Shipping price">
         <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" type="number" step="0.01" min={0} value={value.shippingPrice} onChange={(e) => update("shippingPrice", Number(e.target.value || 0))} />
@@ -104,6 +121,15 @@ export function ProductEditorForm({
       </FormField>
       <FormField label="Product images (comma-separated URLs)" fullWidth>
         <input className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none" value={value.imagesCsv} onChange={(e) => update("imagesCsv", e.target.value)} />
+      </FormField>
+      <FormField label="Primary image index" fullWidth>
+        <input
+          className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none"
+          type="number"
+          min={0}
+          value={value.imagePrimaryIndex}
+          onChange={(e) => update("imagePrimaryIndex", Math.max(0, Number(e.target.value || 0)))}
+        />
       </FormField>
       <FormField label="Variants JSON" fullWidth>
         <textarea className="min-h-24 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 font-mono text-xs text-white outline-none" value={value.variantsJson} onChange={(e) => update("variantsJson", e.target.value)} />
