@@ -388,6 +388,33 @@ const PRODUCT_IMAGE_LIBRARY: Record<string, ProductImageMetadata> = {
     image_verified: true,
     image_last_checked: new Date().toISOString(),
   },
+  "brass floor lamp": {
+    primary_image_url: PRODUCT_IMAGE_UNAVAILABLE,
+    gallery_images: [PRODUCT_IMAGE_UNAVAILABLE],
+    image_source: "placeholder",
+    image_alt: "Brass Floor Lamp",
+    source_product_id: null,
+    image_verified: false,
+    image_last_checked: new Date().toISOString(),
+  },
+  "vintage mirror set": {
+    primary_image_url: PRODUCT_IMAGE_UNAVAILABLE,
+    gallery_images: [PRODUCT_IMAGE_UNAVAILABLE],
+    image_source: "placeholder",
+    image_alt: "Vintage Mirror Set",
+    source_product_id: null,
+    image_verified: false,
+    image_last_checked: new Date().toISOString(),
+  },
+  "collectible wrestling figure": {
+    primary_image_url: PRODUCT_IMAGE_UNAVAILABLE,
+    gallery_images: [PRODUCT_IMAGE_UNAVAILABLE],
+    image_source: "placeholder",
+    image_alt: "Collectible Wrestling Figure",
+    source_product_id: null,
+    image_verified: false,
+    image_last_checked: new Date().toISOString(),
+  },
 };
 
 function normalizeProductKey(value: string): string {

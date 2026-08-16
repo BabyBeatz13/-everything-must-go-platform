@@ -557,7 +557,23 @@ export async function getMarketplaceProductById(productId: string): Promise<Mark
   }
 
   if (!isMarketplaceSupabaseConfigured()) {
-    return fallbackProducts.find((product) => product.id === productId) ?? null;
+    const fallbackMatch = fallbackProducts.find((product) => product.id === productId);
+    if (!fallbackMatch) return null;
+
+    const imageMetadata = resolveProductImage({
+      id: fallbackMatch.id,
+      title: fallbackMatch.title,
+      category: fallbackMatch.category,
+      brand: fallbackMatch.brand,
+      image: fallbackMatch.image,
+      imageSource: fallbackMatch.imageSource,
+    });
+
+    return {
+      ...fallbackMatch,
+      image: imageMetadata.primary_image_url,
+      imageSource: imageMetadata.image_source,
+    };
   }
 
   const { data, error } = await supabaseMarketplace
@@ -568,7 +584,23 @@ export async function getMarketplaceProductById(productId: string): Promise<Mark
     .maybeSingle();
 
   if (error || !data) {
-    return fallbackProducts.find((product) => product.id === productId) ?? null;
+    const fallbackMatch = fallbackProducts.find((product) => product.id === productId);
+    if (!fallbackMatch) return null;
+
+    const imageMetadata = resolveProductImage({
+      id: fallbackMatch.id,
+      title: fallbackMatch.title,
+      category: fallbackMatch.category,
+      brand: fallbackMatch.brand,
+      image: fallbackMatch.image,
+      imageSource: fallbackMatch.imageSource,
+    });
+
+    return {
+      ...fallbackMatch,
+      image: imageMetadata.primary_image_url,
+      imageSource: imageMetadata.image_source,
+    };
   }
 
   const sellerName = await getSellerNameById(data.seller_id);

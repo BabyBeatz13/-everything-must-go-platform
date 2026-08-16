@@ -65,7 +65,8 @@ export type SearchOptions = {
 };
 
 const searchSynonyms: Record<string, string[]> = {
-  iphone: ["apple phone", "iphone", "smartphone", "cell phone", "phone"],
+  jewellery: ["jewelry"],
+  iphone: ["iphone", "apple iphone"],
   "cell phone": ["iphone", "smartphone", "phone"],
   "cuban link": ["cuban chain", "cuban necklace", "cuban links", "miami cuban", "miami cuban link", "gold cuban link", "diamond cuban link", "iced cuban link", "mens cuban link", "womens cuban link"],
   "cuban links": ["cuban link", "cuban chains", "miami cuban", "gold cuban link", "diamond cuban link"],
@@ -78,8 +79,10 @@ const searchSynonyms: Record<string, string[]> = {
   "iced cuban link": ["diamond cuban link", "cuban link", "diamond chain"],
   "men's cuban link": ["mens cuban link", "cuban link", "mens jewelry"],
   "women's cuban link": ["womens cuban link", "cuban link", "womens jewelry"],
-  perfume: ["fragrance", "cologne", "women's perfume", "men's cologne"],
-  cologne: ["fragrance", "perfume", "men's fragrance"],
+  perfume: ["women's perfume", "parfum"],
+  cologne: ["men's cologne", "mens cologne", "men's fragrance"],
+  "women's perfume": ["womens perfume", "perfume", "fragrance"],
+  "men's cologne": ["mens cologne", "cologne", "fragrance"],
   purse: ["handbag", "bag"],
   dresser: ["chest of drawers"],
   tv: ["television"],
@@ -272,13 +275,20 @@ function levenshteinDistance(a: string, b: string): number {
 
 function fuzzyMatchToken(token: string, haystack: string): boolean {
   if (!token || !haystack) return false;
-  if (haystack.includes(token)) return true;
 
   const haystackTokens = buildTokens(haystack);
   for (const candidate of haystackTokens) {
     if (candidate === token) return true;
     if (candidate.startsWith(token)) return true;
-    if (candidate.length > 3 && token.length > 3 && Math.abs(candidate.length - token.length) <= 1 && levenshteinDistance(candidate, token) <= 1) return true;
+    if (
+      candidate.length > 3
+      && token.length > 3
+      && candidate[0] === token[0]
+      && Math.abs(candidate.length - token.length) <= 1
+      && levenshteinDistance(candidate, token) <= 1
+    ) {
+      return true;
+    }
   }
 
   return false;
@@ -294,9 +304,6 @@ function expandQueryTerms(rawTerms: string): string[] {
   expanded.add(normalized);
   for (const candidate of searchSynonyms[normalized] ?? []) {
     expanded.add(candidate);
-    for (const token of buildTokens(candidate)) {
-      expanded.add(token);
-    }
   }
 
   for (let index = 0; index < terms.length - 1; index += 1) {
@@ -304,9 +311,6 @@ function expandQueryTerms(rawTerms: string): string[] {
     expanded.add(bigram);
     for (const candidate of searchSynonyms[bigram] ?? []) {
       expanded.add(candidate);
-      for (const token of buildTokens(candidate)) {
-        expanded.add(token);
-      }
     }
   }
 
@@ -314,9 +318,6 @@ function expandQueryTerms(rawTerms: string): string[] {
     expanded.add(term);
     for (const candidate of searchSynonyms[term] ?? []) {
       expanded.add(candidate);
-      for (const token of buildTokens(candidate)) {
-        expanded.add(token);
-      }
     }
     for (const token of buildTokens(term)) {
       expanded.add(token);
@@ -510,8 +511,9 @@ export function productMatchesSearch(document: SearchableProduct, rawQuery: stri
   if (!sourceText) return false;
 
   const sourceTokens = new Set(buildTokens(sourceText));
-
-  if (sourceText.includes(query)) return true;
+  const queryTokens = buildTokens(query);
+  if (queryTokens.length > 1 && sourceText.includes(query)) return true;
+  if (queryTokens.length === 1 && sourceTokens.has(queryTokens[0])) return true;
 
   const matchByTerm = (term: string) => {
     if (!term) return false;
@@ -522,22 +524,40 @@ export function productMatchesSearch(document: SearchableProduct, rawQuery: stri
     const singularTerm = singularizeToken(normalizedTerm);
     if (!isPhrase && sourceTokens.has(singularTerm)) return true;
 
-    if (document.category && categoryAliasMatches(document.category, term)) return true;
-    if (document.subcategory && categoryAliasMatches(document.subcategory, term)) return true;
     if (document.brand && fuzzyMatchToken(term, document.brand)) return true;
     if (document.title && fuzzyMatchToken(term, document.title)) return true;
     if (document.description && fuzzyMatchToken(term, document.description)) return true;
     return false;
   };
 
-  const queryTokens = buildTokens(query);
   if (queryTokens.length === 0) {
     return expandedQueryTerms.some((term) => term.includes(" ") && matchByTerm(term));
   }
 
   if (queryTokens.length === 1) {
     const [single] = queryTokens;
-    return matchByTerm(single) || expandedQueryTerms.some((term) => term.includes(" ") && matchByTerm(term));
+    if (matchByTerm(single)) return true;
+
+    return expandedQueryTerms.some((term) => {
+      if (!term || term === single) return false;
+
+      // Accept phrase-based synonym matches and close single-word variants (e.g. jewellery -> jewelry)
+      // but ignore short leaked tokens produced from multi-word synonym expansion.
+      if (term.includes(" ")) return matchByTerm(term);
+      if (term.length > single.length) return matchByTerm(term);
+
+      if (
+        term.length >= 4
+        && single.length >= 4
+        && term[0] === single[0]
+        && Math.abs(term.length - single.length) <= 3
+        && levenshteinDistance(term, single) <= 3
+      ) {
+        return matchByTerm(term);
+      }
+
+      return false;
+    });
   }
 
   const meaningfulTokens = queryTokens.filter((token) => token.length > 2);
